@@ -4,6 +4,10 @@ import { FileUploader, StrategyList } from '@/components/FileUploader';
 import { MetricsGrid } from '@/components/MetricsPanel';
 import { MonteCarloChart, FitnessRadar, OOSComparison, StrategyComparisonScatter, EdgeDistribution } from '@/components/Charts';
 import { StrategyDetails } from '@/components/StrategyDetails';
+import { EquityCurveChart } from '@/components/EquityCurve';
+import { TradesTable } from '@/components/TradesTable';
+import { RandomnessPanel } from '@/components/RandomnessCharts';
+import { StrategyComparisonTable } from '@/components/StrategyComparison';
 import { useAppStore } from '@/lib/store';
 
 const Index = () => {
@@ -39,13 +43,8 @@ const Index = () => {
 
       <main className="max-w-7xl mx-auto px-4 py-6">
         {!hasStrategies ? (
-          /* Empty state */
           <div className="flex flex-col items-center justify-center min-h-[70vh] gap-8">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-center space-y-3"
-            >
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center space-y-3">
               <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto animate-pulse-glow">
                 <Shield className="w-8 h-8 text-primary" />
               </div>
@@ -58,12 +57,7 @@ const Index = () => {
             <div className="w-full max-w-lg">
               <FileUploader />
             </div>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.3 }}
-              className="grid grid-cols-3 gap-6 text-center max-w-lg"
-            >
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="grid grid-cols-3 gap-6 text-center max-w-lg">
               {[
                 { label: 'Monte Carlo', desc: 'Simulaciones estadísticas' },
                 { label: 'IS/OOS', desc: 'Validación cruzada' },
@@ -77,7 +71,6 @@ const Index = () => {
             </motion.div>
           </div>
         ) : (
-          /* Dashboard */
           <div className="grid grid-cols-12 gap-4">
             {/* Left sidebar */}
             <div className="col-span-12 lg:col-span-3 space-y-4">
@@ -89,10 +82,19 @@ const Index = () => {
             <div className="col-span-12 lg:col-span-9 space-y-4">
               <MetricsGrid />
 
+              {/* Strategy Comparison (multi-strategy) */}
+              <StrategyComparisonTable />
+
+              {/* Equity Curve */}
+              <EquityCurveChart />
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <MonteCarloChart />
                 <FitnessRadar />
               </div>
+
+              {/* Randomness Tests */}
+              <RandomnessPanel />
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <OOSComparison />
@@ -101,13 +103,15 @@ const Index = () => {
 
               <EdgeDistribution />
 
+              {/* Trades Table */}
+              <TradesTable />
+
               <StrategyDetails />
             </div>
           </div>
         )}
       </main>
 
-      {/* Footer */}
       <footer className="border-t border-border/30 py-4 mt-8">
         <div className="max-w-7xl mx-auto px-4 text-center">
           <p className="text-xs text-muted-foreground">
