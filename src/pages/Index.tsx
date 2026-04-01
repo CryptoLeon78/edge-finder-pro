@@ -1,16 +1,122 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { motion } from 'framer-motion';
+import { Activity, BarChart3, Shield } from 'lucide-react';
+import { FileUploader, StrategyList } from '@/components/FileUploader';
+import { MetricsGrid } from '@/components/MetricsPanel';
+import { MonteCarloChart, FitnessRadar, OOSComparison, StrategyComparisonScatter, EdgeDistribution } from '@/components/Charts';
+import { StrategyDetails } from '@/components/StrategyDetails';
+import { useAppStore } from '@/lib/store';
 
-// IMPORTANT: Fully REPLACE this with your own code
-const PlaceholderIndex = () => {
-  // PLACEHOLDER: Replace this entire return statement with the user's app.
-  // The inline background color is intentionally not part of the design system.
+const Index = () => {
+  const { strategies } = useAppStore();
+  const hasStrategies = strategies.length > 0;
+
   return (
-    <div className="flex min-h-screen items-center justify-center" style={{ backgroundColor: '#fcfbf8' }}>
-      <img data-lovable-blank-page-placeholder="REMOVE_THIS" src="/placeholder.svg" alt="Your app will live here!" />
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="border-b border-border/50 bg-surface-1/50 backdrop-blur-sm sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
+              <Shield className="w-4 h-4 text-primary" />
+            </div>
+            <div>
+              <h1 className="text-sm font-bold tracking-tight">EdgeValidator</h1>
+              <p className="text-xs text-muted-foreground">¿Azar o Ventaja Empírica?</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+            <div className="flex items-center gap-1.5">
+              <Activity className="w-3 h-3" />
+              <span>{strategies.length} estrategia(s)</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <BarChart3 className="w-3 h-3" />
+              <span>SQX Build 139</span>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main className="max-w-7xl mx-auto px-4 py-6">
+        {!hasStrategies ? (
+          /* Empty state */
+          <div className="flex flex-col items-center justify-center min-h-[70vh] gap-8">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-center space-y-3"
+            >
+              <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto animate-pulse-glow">
+                <Shield className="w-8 h-8 text-primary" />
+              </div>
+              <h2 className="text-2xl font-bold">EdgeValidator</h2>
+              <p className="text-muted-foreground max-w-md">
+                Determina si tus estrategias de trading operan con una ventaja empírica real
+                o si son indistinguibles del azar.
+              </p>
+            </motion.div>
+            <div className="w-full max-w-lg">
+              <FileUploader />
+            </div>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+              className="grid grid-cols-3 gap-6 text-center max-w-lg"
+            >
+              {[
+                { label: 'Monte Carlo', desc: 'Simulaciones estadísticas' },
+                { label: 'IS/OOS', desc: 'Validación cruzada' },
+                { label: 'Edge Score', desc: 'Puntuación compuesta' },
+              ].map((item, i) => (
+                <div key={i} className="space-y-1">
+                  <p className="text-xs font-semibold text-primary">{item.label}</p>
+                  <p className="text-xs text-muted-foreground">{item.desc}</p>
+                </div>
+              ))}
+            </motion.div>
+          </div>
+        ) : (
+          /* Dashboard */
+          <div className="grid grid-cols-12 gap-4">
+            {/* Left sidebar */}
+            <div className="col-span-12 lg:col-span-3 space-y-4">
+              <FileUploader />
+              <StrategyList />
+            </div>
+
+            {/* Main content */}
+            <div className="col-span-12 lg:col-span-9 space-y-4">
+              <MetricsGrid />
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <MonteCarloChart />
+                <FitnessRadar />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <OOSComparison />
+                <StrategyComparisonScatter />
+              </div>
+
+              <EdgeDistribution />
+
+              <StrategyDetails />
+            </div>
+          </div>
+        )}
+      </main>
+
+      {/* Footer */}
+      <footer className="border-t border-border/30 py-4 mt-8">
+        <div className="max-w-7xl mx-auto px-4 text-center">
+          <p className="text-xs text-muted-foreground">
+            EdgeValidator • Análisis de ventaja estadística para estrategias de trading
+          </p>
+        </div>
+      </footer>
     </div>
   );
 };
-
-const Index = PlaceholderIndex;
 
 export default Index;
