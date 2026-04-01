@@ -1,14 +1,16 @@
 import { useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Upload, FileArchive, X } from 'lucide-react';
+import JSZip from 'jszip';
 import { parseSQXFiles } from '@/lib/sqx-parser';
 import { analyzeEdge } from '@/lib/statistics';
+import { parseOrdersBin, parseDailyEquityBin } from '@/lib/binary-parser';
 import { useAppStore } from '@/lib/store';
 import { useToast } from '@/hooks/use-toast';
 
 export function FileUploader() {
   const inputRef = useRef<HTMLInputElement>(null);
-  const { addStrategies, setAnalysis, setLoading, isLoading } = useAppStore();
+  const { addStrategies, setAnalysis, setTrades, setEquityCurve, setLoading, isLoading } = useAppStore();
   const { toast } = useToast();
 
   const handleFiles = useCallback(async (files: FileList | null) => {
@@ -25,11 +27,41 @@ export function FileUploader() {
       const strategies = await parseSQXFiles(sqxFiles);
       addStrategies(strategies);
 
-      // Run analysis on each
-      strategies.forEach(strategy => {
+      // Parse binary data and run analysis for each strategy
+      for (let i = 0; i < strategies.length; i++) {
+        const strategy = strategies[i];
+        const file = sqxFiles[i];
+
+        // Analysis
         const analysis = analyzeEdge(strategy);
         setAnalysis(strategy.id, analysis);
-      });
+
+        // Parse binary files from ZIP
+        try {
+          const zip = await JSZip.loadAsync(file);
+
+          // orders.bin
+          const ordersFile = zip.file('orders.bin');
+          if (ordersFile) {
+            const buffer = await ordersFile.async('arraybuffer');
+            const trades = parseOrdersBin(buffer);
+            if (trades.length > 0) setTrades(strategy.id, trades);
+          }
+
+          // dailyEquity.bin (find in any subfolder)
+          const equityFiles = Object.keys(zip.files).filter(n => n.toLowerCase().includes('equity'));
+          if (equityFiles.length > 0) {
+            const eqFile = zip.file(equityFiles[0]);
+            if (eqFile) {
+              const buffer = await eqFile.async('arraybuffer');
+              const curve = parseDailyEquityBin(buffer);
+              if (curve.length > 0) setEquityCurve(strategy.id, curve);
+            }
+          }
+        } catch (binErr) {
+          console.warn('Binary parse warning:', binErr);
+        }
+      }
 
       toast({
         title: `${strategies.length} estrategia(s) cargada(s)`,
@@ -40,7 +72,7 @@ export function FileUploader() {
     } finally {
       setLoading(false);
     }
-  }, [addStrategies, setAnalysis, setLoading, toast]);
+  }, [addStrategies, setAnalysis, setTrades, setEquityCurve, setLoading, toast]);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -52,25 +84,14 @@ export function FileUploader() {
   }, []);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="glass-card p-6"
-    >
+    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="glass-card p-6">
       <div
         onDrop={handleDrop}
         onDragOver={handleDragOver}
         onClick={() => inputRef.current?.click()}
         className="border-2 border-dashed border-border/60 hover:border-primary/50 rounded-lg p-8 text-center cursor-pointer transition-colors group"
       >
-        <input
-          ref={inputRef}
-          type="file"
-          accept=".sqx"
-          multiple
-          className="hidden"
-          onChange={(e) => handleFiles(e.target.files)}
-        />
+        <input ref={inputRef} type="file" accept=".sqx" multiple className="hidden" onChange={(e) => handleFiles(e.target.files)} />
         <div className="flex flex-col items-center gap-3">
           <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
             {isLoading ? (
@@ -80,12 +101,8 @@ export function FileUploader() {
             )}
           </div>
           <div>
-            <p className="text-sm font-medium text-foreground">
-              Arrastra archivos .sqx o haz clic para seleccionar
-            </p>
-            <p className="text-xs text-muted-foreground mt-1">
-              Strategy Quant X Build 139 • Múltiples archivos soportados
-            </p>
+            <p className="text-sm font-medium text-foreground">Arrastra archivos .sqx o haz clic para seleccionar</p>
+            <p className="text-xs text-muted-foreground mt-1">Strategy Quant X Build 139 • Múltiples archivos soportados</p>
           </div>
         </div>
       </div>
@@ -94,7 +111,7 @@ export function FileUploader() {
 }
 
 export function StrategyList() {
-  const { strategies, analyses, selectedStrategyIds, toggleStrategySelection, removeStrategy } = useAppStore();
+  const { strategies, analyses, trades, selectedStrategyIds, toggleStrategySelection, removeStrategy } = useAppStore();
 
   if (strategies.length === 0) return null;
 
@@ -106,6 +123,7 @@ export function StrategyList() {
       <div className="space-y-2">
         {strategies.map((strategy, idx) => {
           const analysis = analyses.get(strategy.id);
+          const tradeCount = trades.get(strategy.id)?.length || 0;
           const isSelected = selectedStrategyIds.includes(strategy.id);
 
           return (
@@ -123,7 +141,7 @@ export function StrategyList() {
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate">{strategy.name}</p>
                 <p className="text-xs text-muted-foreground">
-                  {strategy.setup.symbol} • {strategy.setup.timeframe} • {strategy.engine}
+                  {strategy.setup.symbol} • {strategy.setup.timeframe} • {tradeCount > 0 ? `${tradeCount} trades` : strategy.engine}
                 </p>
               </div>
               {analysis && (
