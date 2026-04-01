@@ -128,7 +128,7 @@ function buildEdgeComponents(
   ];
 }
 
-function classifyEdge(score: number): { verdict: string; verdictLabel: string; verdictColor: string } {
+function classifyEdge(score: number): { verdict: EdgeAnalysis['verdict']; verdictLabel: string; verdictColor: string } {
   if (score >= 75) return { verdict: 'strong_edge', verdictLabel: 'Ventaja Fuerte', verdictColor: 'success' };
   if (score >= 55) return { verdict: 'moderate_edge', verdictLabel: 'Ventaja Moderada', verdictColor: 'warning' };
   if (score >= 35) return { verdict: 'weak_edge', verdictLabel: 'Ventaja Débil', verdictColor: 'accent' };
