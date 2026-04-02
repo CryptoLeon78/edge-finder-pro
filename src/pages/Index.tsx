@@ -11,6 +11,9 @@ import { TradesTable } from '@/components/TradesTable';
 import { RandomnessPanel } from '@/components/RandomnessCharts';
 import { StrategyComparisonTable } from '@/components/StrategyComparison';
 import { DrawdownPanel } from '@/components/DrawdownAnalysis';
+import { WalkForwardPanel } from '@/components/WalkForwardPanel';
+import { PDFExportButton } from '@/components/PDFExport';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useAppStore } from '@/lib/store';
 
 const Index = () => {
@@ -32,6 +35,7 @@ const Index = () => {
             </div>
           </div>
           <div className="flex items-center gap-4 text-xs text-muted-foreground">
+            {hasStrategies && <PDFExportButton />}
             <div className="flex items-center gap-1.5">
               <Activity className="w-3 h-3" />
               <span>{strategies.length} estrategia(s)</span>
@@ -82,41 +86,74 @@ const Index = () => {
               <DatasetUploader />
             </div>
 
-            {/* Main content */}
+            {/* Main content with tabs */}
             <div className="col-span-12 lg:col-span-9 space-y-4">
-              {/* Dashboard KPIs */}
+              {/* Dashboard KPIs always visible */}
               <DashboardSummary />
 
-              <MetricsGrid />
+              <Tabs defaultValue="resumen" className="w-full">
+                <TabsList className="w-full justify-start bg-surface-1 border border-border/50 h-auto flex-wrap p-1 gap-1">
+                  <TabsTrigger value="resumen" className="text-xs data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
+                    Resumen
+                  </TabsTrigger>
+                  <TabsTrigger value="equity" className="text-xs data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
+                    Equity & Drawdown
+                  </TabsTrigger>
+                  <TabsTrigger value="aleatoriedad" className="text-xs data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
+                    Aleatoriedad
+                  </TabsTrigger>
+                  <TabsTrigger value="walkforward" className="text-xs data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
+                    Walk-Forward
+                  </TabsTrigger>
+                  <TabsTrigger value="comparacion" className="text-xs data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
+                    Comparación
+                  </TabsTrigger>
+                  <TabsTrigger value="trades" className="text-xs data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
+                    Trades
+                  </TabsTrigger>
+                  <TabsTrigger value="detalle" className="text-xs data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
+                    Detalle
+                  </TabsTrigger>
+                </TabsList>
 
-              {/* Strategy Comparison (multi-strategy) */}
-              <StrategyComparisonTable />
+                <TabsContent value="resumen" className="space-y-4 mt-4">
+                  <MetricsGrid />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <MonteCarloChart />
+                    <FitnessRadar />
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <OOSComparison />
+                    <StrategyComparisonScatter />
+                  </div>
+                  <EdgeDistribution />
+                </TabsContent>
 
-              {/* Equity Curve */}
-              <EquityCurveChart />
+                <TabsContent value="equity" className="space-y-4 mt-4">
+                  <EquityCurveChart />
+                  <DrawdownPanel />
+                </TabsContent>
 
-              {/* Drawdown Analysis */}
-              <DrawdownPanel />
+                <TabsContent value="aleatoriedad" className="space-y-4 mt-4">
+                  <RandomnessPanel />
+                </TabsContent>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <MonteCarloChart />
-                <FitnessRadar />
-              </div>
+                <TabsContent value="walkforward" className="space-y-4 mt-4">
+                  <WalkForwardPanel />
+                </TabsContent>
 
-              {/* Randomness Tests */}
-              <RandomnessPanel />
+                <TabsContent value="comparacion" className="space-y-4 mt-4">
+                  <StrategyComparisonTable />
+                </TabsContent>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <OOSComparison />
-                <StrategyComparisonScatter />
-              </div>
+                <TabsContent value="trades" className="space-y-4 mt-4">
+                  <TradesTable />
+                </TabsContent>
 
-              <EdgeDistribution />
-
-              {/* Trades Table */}
-              <TradesTable />
-
-              <StrategyDetails />
+                <TabsContent value="detalle" className="space-y-4 mt-4">
+                  <StrategyDetails />
+                </TabsContent>
+              </Tabs>
             </div>
           </div>
         )}
