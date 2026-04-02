@@ -1,6 +1,8 @@
 import { motion } from 'framer-motion';
 import { Activity, BarChart3, Shield } from 'lucide-react';
 import { FileUploader, StrategyList } from '@/components/FileUploader';
+import { DatasetUploader } from '@/components/DatasetUploader';
+import { DashboardSummary } from '@/components/Dashboard';
 import { MetricsGrid } from '@/components/MetricsPanel';
 import { MonteCarloChart, FitnessRadar, OOSComparison, StrategyComparisonScatter, EdgeDistribution } from '@/components/Charts';
 import { StrategyDetails } from '@/components/StrategyDetails';
@@ -8,6 +10,7 @@ import { EquityCurveChart } from '@/components/EquityCurve';
 import { TradesTable } from '@/components/TradesTable';
 import { RandomnessPanel } from '@/components/RandomnessCharts';
 import { StrategyComparisonTable } from '@/components/StrategyComparison';
+import { DrawdownPanel } from '@/components/DrawdownAnalysis';
 import { useAppStore } from '@/lib/store';
 
 const Index = () => {
@@ -76,10 +79,14 @@ const Index = () => {
             <div className="col-span-12 lg:col-span-3 space-y-4">
               <FileUploader />
               <StrategyList />
+              <DatasetUploader />
             </div>
 
             {/* Main content */}
             <div className="col-span-12 lg:col-span-9 space-y-4">
+              {/* Dashboard KPIs */}
+              <DashboardSummary />
+
               <MetricsGrid />
 
               {/* Strategy Comparison (multi-strategy) */}
@@ -87,6 +94,9 @@ const Index = () => {
 
               {/* Equity Curve */}
               <EquityCurveChart />
+
+              {/* Drawdown Analysis */}
+              <DrawdownPanel />
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <MonteCarloChart />
