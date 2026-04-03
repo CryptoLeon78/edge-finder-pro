@@ -9,7 +9,8 @@ export function PDFExportButton() {
   const { strategies, analyses, trades: tradesMap, equityCurves, selectedStrategyIds } = useAppStore();
 
   const exportPDF = useCallback(async () => {
-    const { default: jsPDF } = await import('jspdf');
+    const jsPDFModule = await import('jspdf');
+    const jsPDF = jsPDFModule.default || jsPDFModule.jsPDF;
     await import('jspdf-autotable');
 
     const selected = strategies.filter(s => selectedStrategyIds.includes(s.id));
@@ -39,6 +40,10 @@ export function PDFExportButton() {
       y = 18;
     };
 
+    const checkSpace = (needed: number) => {
+      if (y + needed > pageH - 15) newPage();
+    };
+
     addHeader();
     y = 18;
 
@@ -56,7 +61,7 @@ export function PDFExportButton() {
 
       doc.setFontSize(8);
       doc.setTextColor(148, 163, 184);
-      doc.text(`${strategy.setup.symbol} • ${strategy.setup.timeframe} • ${strategy.setup.dateFrom} → ${strategy.setup.dateTo}`, 10, y);
+      doc.text(`${strategy.setup.symbol} | ${strategy.setup.timeframe} | ${strategy.setup.dateFrom} → ${strategy.setup.dateTo}`, 10, y);
       y += 8;
 
       // Verdict
@@ -97,7 +102,7 @@ export function PDFExportButton() {
 
       // Trade stats
       if (trades.length > 0) {
-        if (y > pageH - 50) newPage();
+        checkSpace(50);
 
         const wins = trades.filter(t => t.pnlMoney > 0).length;
         const totalPnl = trades.reduce((s, t) => s + t.pnlMoney, 0);
@@ -134,7 +139,7 @@ export function PDFExportButton() {
 
       // Randomness tests
       if (trades.length >= 15) {
-        if (y > pageH - 40) newPage();
+        checkSpace(40);
 
         const rand = analyzeRandomness(trades);
         const randRows = [
@@ -164,7 +169,7 @@ export function PDFExportButton() {
 
       // Walk-Forward
       if (trades.length >= 30) {
-        if (y > pageH - 40) newPage();
+        checkSpace(40);
 
         const wf = runWalkForward(trades);
         if (wf.windows.length > 0) {
@@ -197,7 +202,7 @@ export function PDFExportButton() {
           y = (doc as any).lastAutoTable.finalY + 5;
           doc.setFontSize(7);
           doc.setTextColor(148, 163, 184);
-          doc.text(`OOS Efficiency: ${wf.oosEfficiency.toFixed(0)}% • Consistency: ${wf.consistency.toFixed(0)}% • Avg Degradation: ${(wf.avgDegradation * 100).toFixed(1)}%`, 10, y);
+          doc.text(`OOS Efficiency: ${wf.oosEfficiency.toFixed(0)}% | Consistency: ${wf.consistency.toFixed(0)}% | Avg Degradation: ${(wf.avgDegradation * 100).toFixed(1)}%`, 10, y);
           y += 8;
         }
       }
@@ -212,7 +217,7 @@ export function PDFExportButton() {
       doc.setPage(p);
       doc.setFontSize(6);
       doc.setTextColor(100, 116, 139);
-      doc.text(`EdgeValidator • Página ${p}/${totalPages}`, pageW / 2, pageH - 5, { align: 'center' });
+      doc.text(`EdgeValidator | Página ${p}/${totalPages}`, pageW / 2, pageH - 5, { align: 'center' });
     }
 
     doc.save(`EdgeValidator_${new Date().toISOString().slice(0, 10)}.pdf`);
