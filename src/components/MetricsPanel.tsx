@@ -140,12 +140,11 @@ export function MetricsGrid() {
                     initial={{ width: 0 }}
                     animate={{ width: `${comp.score}%` }}
                     transition={{ delay: i * 0.08, duration: 0.5 }}
-                    className="h-1.5 rounded-full"
-                    style={{
-                      background: comp.score >= 70 ? 'hsl(160, 84%, 39%)' :
-                        comp.score >= 50 ? 'hsl(38, 92%, 50%)' :
-                        'hsl(0, 72%, 51%)'
-                    }}
+                    className={`h-1.5 rounded-full ${
+                      comp.score >= 70 ? 'bg-success' :
+                      comp.score >= 50 ? 'bg-warning' :
+                      'bg-destructive'
+                    }`}
                   />
                 </div>
                 <p className="text-xs text-muted-foreground">{comp.description}</p>

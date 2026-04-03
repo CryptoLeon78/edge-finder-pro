@@ -119,12 +119,13 @@ export function analyzeDrawdowns(
 
   const maxDDPeriod = drawdownPeriods.reduce((max, p) => p.drawdownPct > (max?.drawdownPct || 0) ? p : max, drawdownPeriods[0]);
 
-  const totalReturn = equitySeries[equitySeries.length - 1].equity - equitySeries[0].equity;
+  const finalEquity = equitySeries[equitySeries.length - 1].equity;
+  const totalReturn = finalEquity - actualInitialCapital;
   const maxDD = maxDDPeriod?.drawdownPct || 0;
   const maxDDAbs = maxDDPeriod?.drawdownAbs || 0;
   const totalDays = (equitySeries[equitySeries.length - 1].time - equitySeries[0].time) / MS_PER_DAY;
   const years = totalDays / 365.25;
-  const cagr = years > 0 ? (Math.pow(equitySeries[equitySeries.length - 1].equity / equitySeries[0].equity, 1 / years) - 1) * 100 : 0;
+  const cagr = years > 0 && actualInitialCapital > 0 ? (Math.pow(finalEquity / actualInitialCapital, 1 / years) - 1) * 100 : 0;
 
   const monthlyReturns = computeMonthlyReturns(equitySeries);
   const yearlyReturns = computeYearlyReturns(monthlyReturns);
