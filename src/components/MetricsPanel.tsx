@@ -46,14 +46,13 @@ export function EdgeScoreCard({ analysis }: { analysis: EdgeAnalysis }) {
       <p className="text-sm font-semibold mt-2">{analysis.verdictLabel}</p>
       <div className="mt-4 w-full bg-surface-2 rounded-full h-2">
         <div
-          className="h-2 rounded-full transition-all duration-1000"
-          style={{
-            width: `${analysis.overallScore}%`,
-            background: analysis.verdict === 'strong_edge' ? 'hsl(160, 84%, 39%)' :
-              analysis.verdict === 'moderate_edge' ? 'hsl(38, 92%, 50%)' :
-              analysis.verdict === 'weak_edge' ? 'hsl(38, 70%, 50%)' :
-              'hsl(0, 72%, 51%)'
-          }}
+          className={`h-2 rounded-full transition-all duration-1000 ${
+            analysis.verdict === 'strong_edge' ? 'bg-success' :
+            analysis.verdict === 'moderate_edge' ? 'bg-warning' :
+            analysis.verdict === 'weak_edge' ? 'bg-accent' :
+            'bg-destructive'
+          }`}
+          style={{ width: `${analysis.overallScore}%` }}
         />
       </div>
     </motion.div>
@@ -141,12 +140,11 @@ export function MetricsGrid() {
                     initial={{ width: 0 }}
                     animate={{ width: `${comp.score}%` }}
                     transition={{ delay: i * 0.08, duration: 0.5 }}
-                    className="h-1.5 rounded-full"
-                    style={{
-                      background: comp.score >= 70 ? 'hsl(160, 84%, 39%)' :
-                        comp.score >= 50 ? 'hsl(38, 92%, 50%)' :
-                        'hsl(0, 72%, 51%)'
-                    }}
+                    className={`h-1.5 rounded-full ${
+                      comp.score >= 70 ? 'bg-success' :
+                      comp.score >= 50 ? 'bg-warning' :
+                      'bg-destructive'
+                    }`}
                   />
                 </div>
                 <p className="text-xs text-muted-foreground">{comp.description}</p>

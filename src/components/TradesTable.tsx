@@ -1,11 +1,29 @@
 import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { ArrowUpDown, ArrowUp, ArrowDown, Filter, X } from 'lucide-react';
 import { useAppStore } from '@/lib/store';
 import type { TradeOrder } from '@/lib/binary-parser';
 
 type SortField = 'orderNumber' | 'fillTime' | 'pnlMoney' | 'pnlPips' | 'durationBars';
 type SortDir = 'asc' | 'desc';
+
+interface Filters {
+  direction: 'all' | 'long' | 'short';
+  result: 'all' | 'win' | 'loss';
+  dateFrom: string;
+  dateTo: string;
+  pnlMin: string;
+  pnlMax: string;
+}
+
+const DEFAULT_FILTERS: Filters = {
+  direction: 'all',
+  result: 'all',
+  dateFrom: '',
+  dateTo: '',
+  pnlMin: '',
+  pnlMax: '',
+};
 
 export function TradesTable() {
   const { strategies, trades: tradesMap, selectedStrategyIds } = useAppStore();
@@ -15,15 +33,36 @@ export function TradesTable() {
   const [sortField, setSortField] = useState<SortField>('orderNumber');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
   const [page, setPage] = useState(0);
+  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS);
   const pageSize = 25;
 
-  const sorted = useMemo(() => {
+  const filtered = useMemo(() => {
     if (!trades?.length) return [];
-    return [...trades].sort((a, b) => {
+    return trades.filter(t => {
+      if (filters.direction !== 'all' && t.direction !== filters.direction) return false;
+      if (filters.result === 'win' && t.pnlMoney <= 0) return false;
+      if (filters.result === 'loss' && t.pnlMoney >= 0) return false;
+      if (filters.dateFrom) {
+        const from = new Date(filters.dateFrom).getTime();
+        if (t.fillTime < from) return false;
+      }
+      if (filters.dateTo) {
+        const to = new Date(filters.dateTo).getTime() + 86400000;
+        if (t.fillTime > to) return false;
+      }
+      if (filters.pnlMin !== '' && t.pnlMoney < parseFloat(filters.pnlMin)) return false;
+      if (filters.pnlMax !== '' && t.pnlMoney > parseFloat(filters.pnlMax)) return false;
+      return true;
+    });
+  }, [trades, filters]);
+
+  const sorted = useMemo(() => {
+    return [...filtered].sort((a, b) => {
       const mul = sortDir === 'asc' ? 1 : -1;
       return mul * ((a[sortField] as number) - (b[sortField] as number));
     });
-  }, [trades, sortField, sortDir]);
+  }, [filtered, sortField, sortDir]);
 
   const paged = sorted.slice(page * pageSize, (page + 1) * pageSize);
   const totalPages = Math.ceil(sorted.length / pageSize);
@@ -42,31 +81,127 @@ export function TradesTable() {
   };
 
   const formatDate = (ts: number) => {
-    if (!ts || ts < 1000000000000) return '—';
+    if (!ts || ts < 1e12) return '—';
     return new Date(ts).toISOString().slice(0, 16).replace('T', ' ');
   };
 
-  // Summary stats
-  const wins = trades.filter(t => t.pnlMoney > 0).length;
-  const totalPnl = trades.reduce((s, t) => s + t.pnlMoney, 0);
-  const avgPips = trades.reduce((s, t) => s + t.pnlPips, 0) / trades.length;
+  const hasActiveFilters = filters.direction !== 'all' || filters.result !== 'all' ||
+    filters.dateFrom || filters.dateTo || filters.pnlMin || filters.pnlMax;
+
+  // Summary stats (from filtered set)
+  const wins = filtered.filter(t => t.pnlMoney > 0).length;
+  const totalPnl = filtered.reduce((s, t) => s + t.pnlMoney, 0);
+  const avgPips = filtered.length > 0 ? filtered.reduce((s, t) => s + t.pnlPips, 0) / filtered.length : 0;
+
+  const updateFilter = <K extends keyof Filters>(key: K, value: Filters[K]) => {
+    setFilters(f => ({ ...f, [key]: value }));
+    setPage(0);
+  };
 
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="glass-card p-4 space-y-3">
       <div className="flex items-center justify-between">
         <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          Tabla de Operaciones ({trades.length})
+          Tabla de Operaciones ({filtered.length}{filtered.length !== trades.length ? ` / ${trades.length}` : ''})
         </h3>
-        <div className="flex gap-4 text-xs font-mono">
-          <span className="text-success">Wins: {wins} ({(wins / trades.length * 100).toFixed(1)}%)</span>
-          <span className={totalPnl >= 0 ? 'text-success' : 'text-destructive'}>
-            P&L: ${totalPnl.toFixed(2)}
-          </span>
-          <span className={avgPips >= 0 ? 'text-success' : 'text-destructive'}>
-            Avg: {avgPips.toFixed(1)} pips
-          </span>
+        <div className="flex items-center gap-3">
+          <div className="flex gap-4 text-xs font-mono">
+            <span className="text-success">Wins: {wins} ({filtered.length > 0 ? (wins / filtered.length * 100).toFixed(1) : 0}%)</span>
+            <span className={totalPnl >= 0 ? 'text-success' : 'text-destructive'}>
+              P&L: ${totalPnl.toFixed(2)}
+            </span>
+            <span className={avgPips >= 0 ? 'text-success' : 'text-destructive'}>
+              Avg: {avgPips.toFixed(1)} pips
+            </span>
+          </div>
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className={`flex items-center gap-1 px-2 py-1 text-xs rounded transition-colors ${
+              hasActiveFilters ? 'bg-primary/20 text-primary' : 'bg-surface-2 hover:bg-surface-3 text-muted-foreground'
+            }`}
+          >
+            <Filter className="w-3 h-3" />
+            Filtros
+          </button>
         </div>
       </div>
+
+      {/* Filter panel */}
+      {showFilters && (
+        <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} className="flex flex-wrap gap-3 p-3 bg-surface-1 rounded border border-border/30">
+          <label className="flex flex-col gap-1 text-[10px] text-muted-foreground">
+            <span>Dirección</span>
+            <select
+              value={filters.direction}
+              onChange={e => updateFilter('direction', e.target.value as Filters['direction'])}
+              className="bg-surface-2 border border-border rounded px-2 py-1 text-xs font-mono"
+            >
+              <option value="all">Todas</option>
+              <option value="long">Long</option>
+              <option value="short">Short</option>
+            </select>
+          </label>
+          <label className="flex flex-col gap-1 text-[10px] text-muted-foreground">
+            <span>Resultado</span>
+            <select
+              value={filters.result}
+              onChange={e => updateFilter('result', e.target.value as Filters['result'])}
+              className="bg-surface-2 border border-border rounded px-2 py-1 text-xs font-mono"
+            >
+              <option value="all">Todos</option>
+              <option value="win">Ganadores</option>
+              <option value="loss">Perdedores</option>
+            </select>
+          </label>
+          <label className="flex flex-col gap-1 text-[10px] text-muted-foreground">
+            <span>Fecha desde</span>
+            <input
+              type="date"
+              value={filters.dateFrom}
+              onChange={e => updateFilter('dateFrom', e.target.value)}
+              className="bg-surface-2 border border-border rounded px-2 py-1 text-xs font-mono"
+            />
+          </label>
+          <label className="flex flex-col gap-1 text-[10px] text-muted-foreground">
+            <span>Fecha hasta</span>
+            <input
+              type="date"
+              value={filters.dateTo}
+              onChange={e => updateFilter('dateTo', e.target.value)}
+              className="bg-surface-2 border border-border rounded px-2 py-1 text-xs font-mono"
+            />
+          </label>
+          <label className="flex flex-col gap-1 text-[10px] text-muted-foreground">
+            <span>P&L mín ($)</span>
+            <input
+              type="number"
+              value={filters.pnlMin}
+              onChange={e => updateFilter('pnlMin', e.target.value)}
+              placeholder="-∞"
+              className="bg-surface-2 border border-border rounded px-2 py-1 text-xs font-mono w-20"
+            />
+          </label>
+          <label className="flex flex-col gap-1 text-[10px] text-muted-foreground">
+            <span>P&L máx ($)</span>
+            <input
+              type="number"
+              value={filters.pnlMax}
+              onChange={e => updateFilter('pnlMax', e.target.value)}
+              placeholder="+∞"
+              className="bg-surface-2 border border-border rounded px-2 py-1 text-xs font-mono w-20"
+            />
+          </label>
+          {hasActiveFilters && (
+            <button
+              onClick={() => { setFilters(DEFAULT_FILTERS); setPage(0); }}
+              className="self-end flex items-center gap-1 px-2 py-1 text-xs text-destructive bg-destructive/10 rounded hover:bg-destructive/20"
+            >
+              <X className="w-3 h-3" />
+              Limpiar
+            </button>
+          )}
+        </motion.div>
+      )}
 
       <div className="overflow-x-auto">
         <table className="w-full text-xs font-mono">

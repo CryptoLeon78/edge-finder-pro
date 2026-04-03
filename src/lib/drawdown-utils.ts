@@ -43,16 +43,23 @@ export function analyzeDrawdowns(
   initialCapital: number
 ): DrawdownAnalysis {
   // Build equity series from trades if no daily equity
-  const equitySeries = equityCurve.length > 0
-    ? equityCurve.map(p => ({ time: p.timestamp, equity: p.equity }))
-    : buildEquityFromTrades(trades, initialCapital);
+  let equitySeries: { time: number; equity: number }[];
+  
+  if (equityCurve.length > 0) {
+    equitySeries = equityCurve.map(p => ({ time: p.timestamp, equity: p.equity }));
+  } else {
+    equitySeries = buildEquityFromTrades(trades, initialCapital);
+  }
 
   if (equitySeries.length === 0) {
     return emptyAnalysis();
   }
 
-  // Underwater curve
-  let peak = equitySeries[0].equity;
+  // Use actual starting equity from the series (binary data is ground truth)
+  const actualInitialCapital = equitySeries[0].equity > 0 ? equitySeries[0].equity : initialCapital;
+
+  // Underwater curve — DD% relative to running peak
+  let peak = actualInitialCapital;
   const underwaterCurve: { date: string; drawdown: number }[] = [];
   const drawdownPeriods: DrawdownPeriod[] = [];
 
@@ -112,12 +119,13 @@ export function analyzeDrawdowns(
 
   const maxDDPeriod = drawdownPeriods.reduce((max, p) => p.drawdownPct > (max?.drawdownPct || 0) ? p : max, drawdownPeriods[0]);
 
-  const totalReturn = equitySeries[equitySeries.length - 1].equity - equitySeries[0].equity;
+  const finalEquity = equitySeries[equitySeries.length - 1].equity;
+  const totalReturn = finalEquity - actualInitialCapital;
   const maxDD = maxDDPeriod?.drawdownPct || 0;
   const maxDDAbs = maxDDPeriod?.drawdownAbs || 0;
   const totalDays = (equitySeries[equitySeries.length - 1].time - equitySeries[0].time) / MS_PER_DAY;
   const years = totalDays / 365.25;
-  const cagr = years > 0 ? (Math.pow(equitySeries[equitySeries.length - 1].equity / equitySeries[0].equity, 1 / years) - 1) * 100 : 0;
+  const cagr = years > 0 && actualInitialCapital > 0 ? (Math.pow(finalEquity / actualInitialCapital, 1 / years) - 1) * 100 : 0;
 
   const monthlyReturns = computeMonthlyReturns(equitySeries);
   const yearlyReturns = computeYearlyReturns(monthlyReturns);

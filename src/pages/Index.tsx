@@ -12,6 +12,7 @@ import { RandomnessPanel } from '@/components/RandomnessCharts';
 import { StrategyComparisonTable } from '@/components/StrategyComparison';
 import { DrawdownPanel } from '@/components/DrawdownAnalysis';
 import { WalkForwardPanel } from '@/components/WalkForwardPanel';
+import { CorrelationPanel } from '@/components/CorrelationAnalysis';
 import { PDFExportButton } from '@/components/PDFExport';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useAppStore } from '@/lib/store';
@@ -108,6 +109,9 @@ const Index = () => {
                   <TabsTrigger value="comparacion" className="text-xs data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
                     Comparación
                   </TabsTrigger>
+                  <TabsTrigger value="correlacion" className="text-xs data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
+                    Correlación
+                  </TabsTrigger>
                   <TabsTrigger value="trades" className="text-xs data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
                     Trades
                   </TabsTrigger>
@@ -144,6 +148,10 @@ const Index = () => {
 
                 <TabsContent value="comparacion" className="space-y-4 mt-4">
                   <StrategyComparisonTable />
+                </TabsContent>
+
+                <TabsContent value="correlacion" className="space-y-4 mt-4">
+                  <CorrelationPanel />
                 </TabsContent>
 
                 <TabsContent value="trades" className="space-y-4 mt-4">
