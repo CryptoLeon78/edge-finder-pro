@@ -46,14 +46,13 @@ export function EdgeScoreCard({ analysis }: { analysis: EdgeAnalysis }) {
       <p className="text-sm font-semibold mt-2">{analysis.verdictLabel}</p>
       <div className="mt-4 w-full bg-surface-2 rounded-full h-2">
         <div
-          className="h-2 rounded-full transition-all duration-1000"
-          style={{
-            width: `${analysis.overallScore}%`,
-            background: analysis.verdict === 'strong_edge' ? 'hsl(160, 84%, 39%)' :
-              analysis.verdict === 'moderate_edge' ? 'hsl(38, 92%, 50%)' :
-              analysis.verdict === 'weak_edge' ? 'hsl(38, 70%, 50%)' :
-              'hsl(0, 72%, 51%)'
-          }}
+          className={`h-2 rounded-full transition-all duration-1000 ${
+            analysis.verdict === 'strong_edge' ? 'bg-success' :
+            analysis.verdict === 'moderate_edge' ? 'bg-warning' :
+            analysis.verdict === 'weak_edge' ? 'bg-accent' :
+            'bg-destructive'
+          }`}
+          style={{ width: `${analysis.overallScore}%` }}
         />
       </div>
     </motion.div>
