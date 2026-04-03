@@ -150,6 +150,10 @@ const Index = () => {
                   <StrategyComparisonTable />
                 </TabsContent>
 
+                <TabsContent value="correlacion" className="space-y-4 mt-4">
+                  <CorrelationPanel />
+                </TabsContent>
+
                 <TabsContent value="trades" className="space-y-4 mt-4">
                   <TradesTable />
                 </TabsContent>
