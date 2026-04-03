@@ -12,6 +12,7 @@ import { RandomnessPanel } from '@/components/RandomnessCharts';
 import { StrategyComparisonTable } from '@/components/StrategyComparison';
 import { DrawdownPanel } from '@/components/DrawdownAnalysis';
 import { WalkForwardPanel } from '@/components/WalkForwardPanel';
+import { CorrelationPanel } from '@/components/CorrelationAnalysis';
 import { PDFExportButton } from '@/components/PDFExport';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useAppStore } from '@/lib/store';
