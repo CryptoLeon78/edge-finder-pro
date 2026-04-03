@@ -109,6 +109,9 @@ const Index = () => {
                   <TabsTrigger value="comparacion" className="text-xs data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
                     Comparación
                   </TabsTrigger>
+                  <TabsTrigger value="correlacion" className="text-xs data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
+                    Correlación
+                  </TabsTrigger>
                   <TabsTrigger value="trades" className="text-xs data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
                     Trades
                   </TabsTrigger>
