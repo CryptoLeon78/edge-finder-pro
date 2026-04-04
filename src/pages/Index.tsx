@@ -146,6 +146,10 @@ const Index = () => {
                   <DrawdownPanel />
                 </TabsContent>
 
+                <TabsContent value="montecarlo" className="space-y-4 mt-4">
+                  <MonteCarloAdvancedPanel />
+                </TabsContent>
+
                 <TabsContent value="aleatoriedad" className="space-y-4 mt-4">
                   <RandomnessPanel />
                 </TabsContent>
