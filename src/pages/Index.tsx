@@ -105,6 +105,9 @@ const Index = () => {
                   <TabsTrigger value="equity" className="text-xs data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
                     Equity & Drawdown
                   </TabsTrigger>
+                  <TabsTrigger value="montecarlo" className="text-xs data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
+                    Monte Carlo
+                  </TabsTrigger>
                   <TabsTrigger value="aleatoriedad" className="text-xs data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
                     Aleatoriedad
                   </TabsTrigger>
