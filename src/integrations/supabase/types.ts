@@ -14,7 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      access_requests: {
+        Row: {
+          approval_token: string
+          approved_at: string | null
+          created_at: string
+          email: string
+          expires_at: string | null
+          id: string
+          requested_at: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          approval_token?: string
+          approved_at?: string | null
+          created_at?: string
+          email: string
+          expires_at?: string | null
+          id?: string
+          requested_at?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          approval_token?: string
+          approved_at?: string | null
+          created_at?: string
+          email?: string
+          expires_at?: string | null
+          id?: string
+          requested_at?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
