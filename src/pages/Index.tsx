@@ -22,6 +22,8 @@ import { useAppStore } from '@/lib/store';
 const Index = () => {
   const { strategies } = useAppStore();
   const hasStrategies = strategies.length > 0;
+  const access = useAccessCheck();
+
 
   return (
     <div className="min-h-screen bg-background">
