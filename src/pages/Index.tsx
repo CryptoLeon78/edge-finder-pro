@@ -40,6 +40,7 @@ const Index = () => {
             </div>
           </div>
           <div className="flex items-center gap-4 text-xs text-muted-foreground">
+            <AccessBanner expiresAt={access.expiresAt} />
             {hasStrategies && <PDFExportButton />}
             <div className="flex items-center gap-1.5">
               <Activity className="w-3 h-3" />
