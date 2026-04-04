@@ -13,13 +13,17 @@ import { StrategyComparisonTable } from '@/components/StrategyComparison';
 import { DrawdownPanel } from '@/components/DrawdownAnalysis';
 import { WalkForwardPanel } from '@/components/WalkForwardPanel';
 import { CorrelationPanel } from '@/components/CorrelationAnalysis';
+import { MonteCarloAdvancedPanel } from '@/components/MonteCarloAdvanced';
 import { PDFExportButton } from '@/components/PDFExport';
+import { AccessBanner, useAccessCheck } from '@/components/AccessGate';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useAppStore } from '@/lib/store';
 
 const Index = () => {
   const { strategies } = useAppStore();
   const hasStrategies = strategies.length > 0;
+  const access = useAccessCheck();
+
 
   return (
     <div className="min-h-screen bg-background">
@@ -36,6 +40,7 @@ const Index = () => {
             </div>
           </div>
           <div className="flex items-center gap-4 text-xs text-muted-foreground">
+            <AccessBanner expiresAt={access.expiresAt} />
             {hasStrategies && <PDFExportButton />}
             <div className="flex items-center gap-1.5">
               <Activity className="w-3 h-3" />
@@ -100,6 +105,9 @@ const Index = () => {
                   <TabsTrigger value="equity" className="text-xs data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
                     Equity & Drawdown
                   </TabsTrigger>
+                  <TabsTrigger value="montecarlo" className="text-xs data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
+                    Monte Carlo
+                  </TabsTrigger>
                   <TabsTrigger value="aleatoriedad" className="text-xs data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
                     Aleatoriedad
                   </TabsTrigger>
@@ -136,6 +144,10 @@ const Index = () => {
                 <TabsContent value="equity" className="space-y-4 mt-4">
                   <EquityCurveChart />
                   <DrawdownPanel />
+                </TabsContent>
+
+                <TabsContent value="montecarlo" className="space-y-4 mt-4">
+                  <MonteCarloAdvancedPanel />
                 </TabsContent>
 
                 <TabsContent value="aleatoriedad" className="space-y-4 mt-4">
