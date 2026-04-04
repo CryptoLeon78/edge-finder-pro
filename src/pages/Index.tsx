@@ -13,7 +13,9 @@ import { StrategyComparisonTable } from '@/components/StrategyComparison';
 import { DrawdownPanel } from '@/components/DrawdownAnalysis';
 import { WalkForwardPanel } from '@/components/WalkForwardPanel';
 import { CorrelationPanel } from '@/components/CorrelationAnalysis';
+import { MonteCarloAdvancedPanel } from '@/components/MonteCarloAdvanced';
 import { PDFExportButton } from '@/components/PDFExport';
+import { AccessBanner, useAccessCheck } from '@/components/AccessGate';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useAppStore } from '@/lib/store';
 
