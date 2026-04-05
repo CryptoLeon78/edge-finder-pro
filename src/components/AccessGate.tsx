@@ -56,11 +56,12 @@ export function useAccessCheck() {
     }
 
     try {
+      // Also check rejected status so we can show the right screen
       const { data, error } = await supabase
         .from('access_requests')
         .select('status, expires_at')
         .eq('email', email)
-        .in('status', ['pending', 'approved'])
+        .in('status', ['pending', 'approved', 'rejected'])
         .order('created_at', { ascending: false })
         .limit(1);
 
@@ -79,6 +80,8 @@ export function useAccessCheck() {
         });
       } else if (req.status === 'pending') {
         setAccess({ status: 'pending', email, expiresAt: null });
+      } else if (req.status === 'rejected') {
+        setAccess({ status: 'rejected', email, expiresAt: null });
       } else {
         setAccess({ status: 'no_request', email, expiresAt: null });
       }
