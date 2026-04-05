@@ -291,7 +291,9 @@ function calcSharpe(returns: number[]): number {
   if (returns.length < 2) return 0;
   const m = mean(returns);
   const s = stdDev(returns);
-  return s > 0 ? (m / s) * Math.sqrt(252) : 0; // annualized
+  // Use sqrt(N) where N = number of trades as annualization proxy
+  // This gives a per-trade Sharpe scaled by sample size
+  return s > 0 ? (m / s) * Math.sqrt(returns.length) : 0;
 }
 
 function fisherYatesShuffle<T>(arr: T[]): T[] {

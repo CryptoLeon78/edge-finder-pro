@@ -40,8 +40,8 @@ export function MonteCarloAdvancedPanel() {
     if (!trades?.length || !strategy) return;
     setIsRunning(true);
 
-    // Use requestAnimationFrame to not block UI
-    requestAnimationFrame(() => {
+    // Use setTimeout to yield to the browser before heavy computation
+    setTimeout(() => {
       const initial = strategy.moneyManagement.initialCapital;
       const mc = runPermutationMC(trades, initial, mcIterations);
       const exp = analyzeExpectancy(trades);
@@ -50,7 +50,7 @@ export function MonteCarloAdvancedPanel() {
       setExpectancy(exp);
       setRuinResult(ruin);
       setIsRunning(false);
-    });
+    }, 50);
   };
 
   // Auto-calculate expectancy on load

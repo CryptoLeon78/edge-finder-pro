@@ -169,7 +169,7 @@ function parseCSVDataset(text: string, fileName: string): Dataset {
 
 export function DatasetUploader() {
   const inputRef = useRef<HTMLInputElement>(null);
-  const { datasets, addDataset, setActiveDataset, activeDatasetId, strategies } = useAppStore();
+  const { datasets, addDataset, setParsedDataset, parsedDatasets, setActiveDataset, activeDatasetId, strategies } = useAppStore();
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
 
@@ -194,9 +194,8 @@ export function DatasetUploader() {
           strategies: [],
         });
 
-        // Store parsed records in a global map for access
-        (window as any).__datasets = (window as any).__datasets || new Map();
-        (window as any).__datasets.set(dataset.id, dataset);
+        // Store parsed records in the zustand store
+        setParsedDataset(dataset.id, dataset);
 
         setActiveDataset(dataset.id);
 
@@ -208,7 +207,7 @@ export function DatasetUploader() {
         toast({ title: 'Error al parsear archivo', description: String(err), variant: 'destructive' });
       }
     }
-  }, [addDataset, setActiveDataset, toast]);
+  }, [addDataset, setParsedDataset, setActiveDataset, toast]);
 
   const activeDataset = useMemo(() => {
     if (!activeDatasetId) return null;
@@ -218,7 +217,7 @@ export function DatasetUploader() {
   // Walk-forward coverage check
   const coverageInfo = useMemo(() => {
     if (!activeDatasetId) return null;
-    const ds = (window as any).__datasets?.get(activeDatasetId) as Dataset | undefined;
+    const ds = parsedDatasets.get(activeDatasetId);
     if (!ds) return null;
 
     return strategies.map(s => {
@@ -241,7 +240,7 @@ export function DatasetUploader() {
         symbolMatch: s.setup.symbol.toUpperCase().includes(ds.symbol) || ds.symbol.includes(s.setup.symbol.toUpperCase()),
       };
     });
-  }, [activeDatasetId, strategies]);
+  }, [activeDatasetId, strategies, parsedDatasets]);
 
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="glass-card p-4 space-y-3">

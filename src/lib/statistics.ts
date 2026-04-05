@@ -204,10 +204,15 @@ function analyzeConsistency(strategy: SQXStrategy): ConsistencyResult {
   }
 
   const oosConsistent = oosScores.length > 1 ? stdDev(oosScores) < 0.2 : false;
+  const winRateStability = oosScores.length > 0 ? 1 - (stdDev(oosScores) / (mean(oosScores) || 1)) : 0;
+
+  // Compute profit factor stability from OOS sub-period variance
+  const oosVariation = oosScores.length > 1 ? stdDev(oosScores) / (mean(oosScores) || 1) : 1;
+  const profitFactorStability = Math.max(0, Math.min(1, 1 - oosVariation));
 
   return {
-    winRateStability: oosScores.length > 0 ? 1 - (stdDev(oosScores) / (mean(oosScores) || 1)) : 0,
-    profitFactorStability: 0.5,
+    winRateStability,
+    profitFactorStability,
     monthlyReturnCorrelation: 0,
     isOosConsistent: oosConsistent,
     isOosDegradation: degradation,
@@ -219,12 +224,34 @@ function analyzeConsistency(strategy: SQXStrategy): ConsistencyResult {
 function analyzeRobustness(strategy: SQXStrategy): RobustnessResult {
   const is = strategy.fitness.IS || 0;
   const oos = strategy.fitness.OOS || 0;
+  const fs = strategy.fitness.FS || 0;
+
+  // OOS/IS performance ratio
+  const oosPerformanceRatio = is > 0 ? Math.min(1, oos / is) : 0;
+
+  // Parameter sensitivity: use the spread across all OOS sub-periods
+  // High variance = high sensitivity = bad
+  const oosScores: number[] = [];
+  for (let i = 1; i <= 10; i++) {
+    const key = `OOS${i}` as string;
+    if (strategy.fitness[key] && strategy.fitness[key] > 0) {
+      oosScores.push(strategy.fitness[key]);
+    }
+  }
+  const oosSpread = oosScores.length > 1
+    ? 1 - Math.min(1, (Math.max(...oosScores) - Math.min(...oosScores)) / (mean(oosScores) || 1))
+    : 0.5;
+  const parameterSensitivity = Math.max(0, Math.min(1, oosSpread));
+
+  // Stagnation: measured by degradation gap between IS and FS (final fitness)
+  // Large gap = high stagnation during later periods
+  const stagnationScore = is > 0 ? Math.max(0, Math.min(1, (is - fs) / is)) : 0.5;
 
   return {
-    parameterSensitivity: 0.5,
-    oosPerformanceRatio: is > 0 ? Math.min(1, oos / is) : 0,
-    drawdownRecoveryRate: Math.min(1, (strategy.fitness.FS || 0)),
-    stagnationScore: 0.3,
+    parameterSensitivity,
+    oosPerformanceRatio,
+    drawdownRecoveryRate: Math.min(1, fs),
+    stagnationScore,
   };
 }
 
