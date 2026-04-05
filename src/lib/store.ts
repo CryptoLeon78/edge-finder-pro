@@ -10,12 +10,22 @@ export interface DatasetInfo {
   strategies: string[];
 }
 
+export interface ParsedDataset {
+  id: string;
+  name: string;
+  fileName: string;
+  records: { date: Date; open: number; high: number; low: number; close: number; volume: number }[];
+  dateRange: { from: Date; to: Date };
+  symbol: string;
+}
+
 interface AppState {
   strategies: SQXStrategy[];
   analyses: Map<string, EdgeAnalysis>;
   trades: Map<string, TradeOrder[]>;
   equityCurves: Map<string, DailyEquityPoint[]>;
   datasets: DatasetInfo[];
+  parsedDatasets: Map<string, ParsedDataset>;
   activeDatasetId: string | null;
   selectedStrategyIds: string[];
   isLoading: boolean;
@@ -30,6 +40,7 @@ interface AppState {
   toggleStrategySelection: (id: string) => void;
   setLoading: (loading: boolean) => void;
   addDataset: (dataset: DatasetInfo) => void;
+  setParsedDataset: (id: string, dataset: ParsedDataset) => void;
   setActiveDataset: (id: string | null) => void;
 }
 
@@ -39,6 +50,7 @@ export const useAppStore = create<AppState>((set) => ({
   trades: new Map(),
   equityCurves: new Map(),
   datasets: [],
+  parsedDatasets: new Map(),
   activeDatasetId: null,
   selectedStrategyIds: [],
   isLoading: false,
@@ -95,6 +107,13 @@ export const useAppStore = create<AppState>((set) => ({
 
   addDataset: (dataset) =>
     set((state) => ({ datasets: [...state.datasets, dataset] })),
+
+  setParsedDataset: (id, dataset) =>
+    set((state) => {
+      const newParsed = new Map(state.parsedDatasets);
+      newParsed.set(id, dataset);
+      return { parsedDatasets: newParsed };
+    }),
 
   setActiveDataset: (id) => set({ activeDatasetId: id }),
 }));
