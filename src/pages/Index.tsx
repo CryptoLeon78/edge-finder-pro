@@ -19,11 +19,31 @@ import { PDFExportButton } from '@/components/PDFExport';
 import { AccessBanner, useAccessCheck } from '@/components/AccessGate';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useAppStore } from '@/lib/store';
+import { Button } from '@/components/ui/button';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 const Index = () => {
   const { strategies } = useAppStore();
   const hasStrategies = strategies.length > 0;
   const access = useAccessCheck();
+  const [portalLoading, setPortalLoading] = useState(false);
+  const { toast } = useToast();
+
+  const handleManageSubscription = async () => {
+    if (!access.email) return;
+    setPortalLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('customer-portal', {
+        body: { email: access.email },
+      });
+      if (error) throw error;
+      if (data?.url) window.open(data.url, '_blank');
+    } catch {
+      toast({ title: 'Error', description: 'No se pudo abrir el portal de suscripción.', variant: 'destructive' });
+    }
+    setPortalLoading(false);
+  };
 
 
   return (
