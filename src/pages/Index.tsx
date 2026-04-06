@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Activity, BarChart3, Shield } from 'lucide-react';
+import { Activity, BarChart3, Shield, CreditCard, Loader2, ExternalLink } from 'lucide-react';
 import { FileUploader, StrategyList } from '@/components/FileUploader';
 import { DatasetUploader } from '@/components/DatasetUploader';
 import { DashboardSummary } from '@/components/Dashboard';
@@ -18,11 +19,31 @@ import { PDFExportButton } from '@/components/PDFExport';
 import { AccessBanner, useAccessCheck } from '@/components/AccessGate';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useAppStore } from '@/lib/store';
+import { Button } from '@/components/ui/button';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 const Index = () => {
   const { strategies } = useAppStore();
   const hasStrategies = strategies.length > 0;
   const access = useAccessCheck();
+  const [portalLoading, setPortalLoading] = useState(false);
+  const { toast } = useToast();
+
+  const handleManageSubscription = async () => {
+    if (!access.email) return;
+    setPortalLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('customer-portal', {
+        body: { email: access.email },
+      });
+      if (error) throw error;
+      if (data?.url) window.open(data.url, '_blank');
+    } catch {
+      toast({ title: 'Error', description: 'No se pudo abrir el portal de suscripción.', variant: 'destructive' });
+    }
+    setPortalLoading(false);
+  };
 
 
   return (
@@ -41,6 +62,19 @@ const Index = () => {
           </div>
           <div className="flex items-center gap-4 text-xs text-muted-foreground">
             <AccessBanner expiresAt={access.expiresAt} subscriptionEnd={access.subscriptionEnd} />
+            {access.status === 'subscribed' && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleManageSubscription}
+                disabled={portalLoading}
+                className="gap-1.5 text-xs h-7"
+              >
+                {portalLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <CreditCard className="w-3 h-3" />}
+                Gestionar Suscripción
+                <ExternalLink className="w-2.5 h-2.5" />
+              </Button>
+            )}
             {hasStrategies && <PDFExportButton />}
             <div className="flex items-center gap-1.5">
               <Activity className="w-3 h-3" />
