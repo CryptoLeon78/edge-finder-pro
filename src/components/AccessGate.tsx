@@ -13,6 +13,7 @@ interface AccessState {
 }
 
 const STORAGE_KEY = 'edgevalidator_access_email';
+const SUPERUSER_EMAILS = ['ivanaza8@gmail.com'];
 
 function getDaysRemaining(expiresAt: string): number {
   const now = new Date();
@@ -52,6 +53,12 @@ export function useAccessCheck() {
     const email = localStorage.getItem(STORAGE_KEY);
     if (!email) {
       setAccess({ status: 'no_request', email: null, expiresAt: null });
+      return;
+    }
+
+    // Superuser bypass - immediate access without request
+    if (SUPERUSER_EMAILS.includes(email.toLowerCase())) {
+      setAccess({ status: 'approved', email, expiresAt: null });
       return;
     }
 
