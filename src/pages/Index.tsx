@@ -76,14 +76,6 @@ const Index = () => {
               </Button>
             )}
             {hasStrategies && <PDFExportButton />}
-            <div className="flex items-center gap-1.5">
-              <Activity className="w-3 h-3" />
-              <span>{strategies.length} estrategia(s)</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <BarChart3 className="w-3 h-3" />
-              <span>SQX Build 139</span>
-            </div>
           </div>
         </div>
       </header>
@@ -121,16 +113,41 @@ const Index = () => {
           <div className="grid grid-cols-12 gap-4">
             {/* Left sidebar */}
             <div className="col-span-12 lg:col-span-3 space-y-4">
-              <FileUploader />
+              <div className="glass-card p-3">
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+                  Cargar Estrategias
+                </h3>
+                <FileUploader />
+              </div>
+              <div className="glass-card p-3">
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+                  Datasets
+                </h3>
+                <DatasetUploader />
+              </div>
               <StrategyList />
-              <DatasetUploader />
             </div>
 
             {/* Main content with tabs */}
             <div className="col-span-12 lg:col-span-9 space-y-4">
-              {/* Dashboard KPIs always visible */}
-              <DashboardSummary />
+              {/* Header section */}
+              <div className="glass-card p-4">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-sm font-semibold">Análisis de Estrategias</h2>
+                  <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-1.5">
+                      <Activity className="w-3 h-3" />
+                      <span>{strategies.length} estrategia(s) cargada(s)</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <BarChart3 className="w-3 h-3" />
+                      <span>SQX Build 139</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
 
+              {/* Tabs */}
               <Tabs defaultValue="resumen" className="w-full">
                 <TabsList className="w-full justify-start bg-surface-1 border border-border/50 h-auto flex-wrap p-1 gap-1">
                   <TabsTrigger value="resumen" className="text-xs data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
@@ -163,6 +180,7 @@ const Index = () => {
                 </TabsList>
 
                 <TabsContent value="resumen" className="space-y-4 mt-4">
+                  <DashboardSummary />
                   <MetricsGrid />
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <MonteCarloChart />

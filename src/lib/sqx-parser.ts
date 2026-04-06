@@ -268,8 +268,31 @@ function parseFitnessScores(xml: string): FitnessScores {
 function parseMetricsFromSettings(xml: string): StrategyMetrics {
   const metrics: StrategyMetrics = {};
   
-  // Extract metric names from the base64 encoded stats
-  // The stats section contains field names prefixed with 'g' (for number) or 'e' (for int)
+  // Extract from Fingerprint element - most reliable source
+  const fingerprintMatch = xml.match(/<Fingerprint[^>]*trades="(\d+)"[^>]*profit="([^"]+)"[^>]*drawdown="([^"]+)"/);
+  if (fingerprintMatch) {
+    metrics['TotalTrades'] = parseInt(fingerprintMatch[1]);
+    metrics['NetProfit'] = parseFloat(fingerprintMatch[2]);
+    metrics['MaxDrawdownMoney'] = parseFloat(fingerprintMatch[3]);
+    metrics['Fitness'] = parseFloat(fingerprintMatch[3]); // for backward compat
+  }
+
+  // Also extract individual trade direction stats
+  const statsRegex = /<stats_([^>]+)\s+type="com\.strategyquant\.tradinglib\.SQStats">\s*<SQStats[^>]*e="b64">([^<]+)<\/SQStats>/g;
+  let match;
+  while ((match = statsRegex.exec(xml)) !== null) {
+    const statsKey = match[1];
+    // For now, just store the raw base64 for later processing
+    metrics[`${statsKey}_raw`] = match[2];
+  }
+  
+  // Extract additional values from SpecialValuesMap
+  const backtestDurationMatch = xml.match(/<BacktestDuration[^>]*type="Double">([^<]+)</);
+  if (backtestDurationMatch) {
+    metrics['BacktestDuration'] = parseFloat(backtestDurationMatch[1]);
+  }
+
+  // Add default metric names initialized to 0 for compatibility
   const metricNames = [
     'NetProfitOOS', 'SortinoRatio', 'DDRecoveryTrades', 'EoFPerc',
     'DDCurrentMonth', 'OOSPatternScore', 'EquityAngle', 'UlcerPerformanceIndex',
@@ -302,12 +325,13 @@ function parseMetricsFromSettings(xml: string): StrategyMetrics {
     'RetDD1YearAgo', 'ProfitTargetPerc', 'ExposureBars', 'UlcerIndex',
     'PositiveStreaksPct80', 'MaxTSIntradayDrawdown', 'RetDD2YearsAgo',
     'DaysInCurrentDD', 'SLPipsP75', 'OpenDrawdownPct', 'AvgDaysBetweenDrawdowns',
-    'SLPerc',
+    'SLPerc', 'TotalTrades', 'NetProfit', 'MaxDrawdownMoney',
   ];
 
-  // Initialize all known metrics to 0
   metricNames.forEach(name => {
-    metrics[name] = 0;
+    if (!(name in metrics)) {
+      metrics[name] = 0;
+    }
   });
 
   return metrics;
