@@ -47,10 +47,10 @@ const Index = () => {
 
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overflow-x-hidden">
       {/* Header */}
-      <header className="border-b border-border/50 bg-surface-1/50 backdrop-blur-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+      <header className="border-b border-border/50 bg-surface-1/50 backdrop-blur-sm sticky top-0 z-50 shrink-0">
+        <div className="max-w-[1920px] mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
               <Shield className="w-4 h-4 text-primary" />
@@ -80,7 +80,7 @@ const Index = () => {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 py-6">
+      <main className="max-w-[1920px] mx-auto px-4 py-6 overflow-x-auto">
         {!hasStrategies ? (
           <div className="flex flex-col items-center justify-center min-h-[70vh] gap-8">
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center space-y-3">
@@ -110,9 +110,9 @@ const Index = () => {
             </motion.div>
           </div>
         ) : (
-          <div className="grid grid-cols-12 gap-4">
+          <div className="grid grid-cols-12 gap-4 min-h-0">
             {/* Left sidebar */}
-            <div className="col-span-12 lg:col-span-3 space-y-4">
+            <div className="col-span-12 lg:col-span-3 space-y-4 overflow-y-auto max-h-[calc(100vh-140px)] pr-1">
               <div className="glass-card p-3">
                 <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
                   Cargar Estrategias
@@ -129,10 +129,10 @@ const Index = () => {
             </div>
 
             {/* Main content with tabs */}
-            <div className="col-span-12 lg:col-span-9 space-y-4">
+            <div className="col-span-12 lg:col-span-9 space-y-4 min-h-0">
               {/* Header section */}
-              <div className="glass-card p-4">
-                <div className="flex items-center justify-between">
+              <div className="glass-card p-4 shrink-0">
+                <div className="flex items-center justify-between flex-wrap gap-2">
                   <h2 className="text-sm font-semibold">Análisis de Estrategias</h2>
                   <div className="flex items-center gap-4 text-xs text-muted-foreground">
                     <div className="flex items-center gap-1.5">
@@ -141,15 +141,27 @@ const Index = () => {
                     </div>
                     <div className="flex items-center gap-1.5">
                       <BarChart3 className="w-3 h-3" />
-                      <span>SQX Build 139</span>
+                      {(() => {
+                        const versions = [...new Set(strategies.map(s => s.appVersion).filter(v => v && v !== 'Unknown'))];
+                        if (versions.length === 0) return <span>SQX</span>;
+                        if (versions.length === 1) return <span>{versions[0]}</span>;
+                        return (
+                          <span className="flex gap-1">
+                            {versions.slice(0, 3).map((v, i) => (
+                              <span key={i} className="px-1.5 py-0.5 bg-surface-2 rounded text-[10px]">{v}</span>
+                            ))}
+                            {versions.length > 3 && <span>+{versions.length - 3}</span>}
+                          </span>
+                        );
+                      })()}
                     </div>
                   </div>
                 </div>
               </div>
 
               {/* Tabs */}
-              <Tabs defaultValue="resumen" className="w-full">
-                <TabsList className="w-full justify-start bg-surface-1 border border-border/50 h-auto flex-wrap p-1 gap-1">
+              <Tabs defaultValue="resumen" className="w-full min-w-0">
+                <TabsList className="w-full justify-start bg-surface-1 border border-border/50 h-auto flex-wrap p-1 gap-1 overflow-x-auto">
                   <TabsTrigger value="resumen" className="text-xs data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
                     Resumen
                   </TabsTrigger>
@@ -231,8 +243,8 @@ const Index = () => {
         )}
       </main>
 
-      <footer className="border-t border-border/30 py-4 mt-8">
-        <div className="max-w-7xl mx-auto px-4 text-center">
+      <footer className="border-t border-border/30 py-4 mt-8 shrink-0">
+        <div className="max-w-[1920px] mx-auto px-4 text-center">
           <p className="text-xs text-muted-foreground">
             EdgeValidator • Análisis de ventaja estadística para estrategias de trading
           </p>

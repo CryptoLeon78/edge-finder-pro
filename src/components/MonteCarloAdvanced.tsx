@@ -30,6 +30,7 @@ export function MonteCarloAdvancedPanel() {
 
   const [mcIterations, setMcIterations] = useState(2000);
   const [ruinThreshold, setRuinThreshold] = useState(50);
+  const [tradeHorizon, setTradeHorizon] = useState(3);
   const [isRunning, setIsRunning] = useState(false);
 
   const [mcResult, setMcResult] = useState<PermutationMCResult | null>(null);
@@ -43,9 +44,10 @@ export function MonteCarloAdvancedPanel() {
     // Use setTimeout to yield to the browser before heavy computation
     setTimeout(() => {
       const initial = strategy.moneyManagement.initialCapital;
+      const horizon = tradeHorizon * trades.length;
       const mc = runPermutationMC(trades, initial, mcIterations);
       const exp = analyzeExpectancy(trades);
-      const ruin = simulateRuin(trades, initial, ruinThreshold / 100, 5000);
+      const ruin = simulateRuin(trades, initial, ruinThreshold / 100, 5000, horizon);
       setMcResult(mc);
       setExpectancy(exp);
       setRuinResult(ruin);
@@ -107,11 +109,31 @@ export function MonteCarloAdvancedPanel() {
                 <option value={90}>90%</option>
               </select>
             </label>
+            <label className="text-xs text-muted-foreground flex items-center gap-1.5">
+              Horizont:
+              <select
+                value={tradeHorizon}
+                onChange={e => setTradeHorizon(Number(e.target.value))}
+                className="bg-surface-2 border border-border rounded px-2 py-1 text-xs font-mono"
+              >
+                <option value={1}>1x</option>
+                <option value={2}>2x</option>
+                <option value={3}>3x</option>
+                <option value={5}>5x</option>
+                <option value={10}>10x</option>
+              </select>
+            </label>
             <Button size="sm" onClick={runAnalysis} disabled={isRunning} className="gap-1.5">
               <Play className="w-3 h-3" />
               {isRunning ? 'Ejecutando...' : 'Ejecutar Simulación'}
             </Button>
           </div>
+        </div>
+        {/* Help text */}
+        <div className="text-[10px] text-muted-foreground space-y-1 mt-2">
+          <p><span className="font-medium text-foreground">Monte Carlo:</span> Baraja los trades miles de veces para ver si el resultado real supera a los aleatorios (significancia estadística).</p>
+          <p><span className="font-medium text-foreground">Ruin:</span> Simula trayectorias futuras con los trades históricos (sampling con reemplazo). Calcula la probabilidad de caer por debajo del umbral.</p>
+          <p><span className="font-medium text-foreground">Horizont:</span> Multiplicador de trades a simular. 3x significa simular 3× más trades que el historial (ej. 1000 trades → 3000 simulados).</p>
         </div>
       </motion.div>
 
@@ -204,6 +226,20 @@ function MCResultsSection({ mc }: { mc: PermutationMCResult }) {
   const eqColor = mc.pValueEquity < 0.05 ? 'text-success' : 'text-warning';
   const ddColor = mc.pValueDD < 0.05 ? 'text-success' : 'text-warning';
 
+  // Calculate Y domain for better scale
+  const allValues = mc.permutedEquities.flat();
+  const minEq = Math.min(...allValues, mc.originalFinalEquity);
+  const maxEq = Math.max(...allValues, mc.originalFinalEquity);
+  const eqPadding = (maxEq - minEq) * 0.15;
+  const yDomain: [number, number] = [
+    Math.min(minEq - eqPadding, mc.originalFinalEquity * 0.9),
+    maxEq + eqPadding
+  ];
+
+  // Distribution Y domain
+  const maxCount = Math.max(...distData.map(d => d.count));
+  const distDomain: [number, number] = [0, maxCount * 1.15];
+
   return (
     <>
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="glass-card p-4 space-y-3">
@@ -221,14 +257,17 @@ function MCResultsSection({ mc }: { mc: PermutationMCResult }) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Permuted curves */}
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="chart-container">
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
             Curvas de Equity Permutadas
           </h3>
+          <div className="text-[10px] text-muted-foreground mb-2">
+            Líneas grises = permutaciones aleatorias. Línea verde = estrategia real. Por encima = ventaja real.
+          </div>
           <ResponsiveContainer width="100%" height={260}>
             <LineChart data={curveData}>
               <CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.grid} />
               <XAxis dataKey="x" stroke={CHART_COLORS.textDim} tick={{ fontSize: 10 }} />
-              <YAxis stroke={CHART_COLORS.textDim} tick={{ fontSize: 10 }} tickFormatter={v => formatNumber(v)} />
+              <YAxis stroke={CHART_COLORS.textDim} tick={{ fontSize: 10 }} tickFormatter={v => formatNumber(v)} domain={yDomain} />
               <Tooltip {...CHART_TOOLTIP_STYLE} />
               {mc.permutedEquities.map((_, i) => (
                 <Line key={`p_${i}`} dataKey={`p_${i}`} stroke={CHART_COLORS.muted} strokeWidth={0.5} strokeOpacity={0.4} dot={false} isAnimationActive={false} />
@@ -237,24 +276,37 @@ function MCResultsSection({ mc }: { mc: PermutationMCResult }) {
           </ResponsiveContainer>
         </motion.div>
 
-        {/* Distribution of final equities */}
+        {/* Distribution as Area chart for better visibility */}
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="chart-container">
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
-            Distribución Equity Final (Permutaciones)
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+            Distribución Equity Final
           </h3>
+          <div className="text-[10px] text-muted-foreground mb-2">
+            Histograma de resultados finales. Barra verde = estrategia real.
+          </div>
           <ResponsiveContainer width="100%" height={260}>
-            <BarChart data={distData}>
+            <AreaChart data={distData}>
               <CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.grid} />
               <XAxis dataKey="bin" stroke={CHART_COLORS.textDim} tick={{ fontSize: 9 }} interval={Math.max(1, Math.floor(distData.length / 6))} />
-              <YAxis stroke={CHART_COLORS.textDim} tick={{ fontSize: 10 }} />
+              <YAxis stroke={CHART_COLORS.textDim} tick={{ fontSize: 10 }} domain={distDomain} />
               <Tooltip {...CHART_TOOLTIP_STYLE} />
-              <ReferenceLine x={distData.find(d => d.isOriginal)?.bin} stroke={CHART_COLORS.primary} strokeWidth={2} label={{ value: 'Real', fill: CHART_COLORS.primary, fontSize: 10 }} />
-              <Bar dataKey="count" radius={[2, 2, 0, 0]}>
-                {distData.map((entry, i) => (
-                  <Cell key={i} fill={entry.isOriginal ? CHART_COLORS.primary : CHART_COLORS.muted} fillOpacity={entry.isOriginal ? 1 : 0.5} />
-                ))}
-              </Bar>
-            </BarChart>
+              <defs>
+                <linearGradient id="distGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor={CHART_COLORS.primary} stopOpacity={0.8} />
+                  <stop offset="95%" stopColor={CHART_COLORS.primary} stopOpacity={0.2} />
+                </linearGradient>
+              </defs>
+              <Area 
+                type="monotone" 
+                dataKey="count" 
+                stroke={CHART_COLORS.primary} 
+                fill="url(#distGradient)" 
+                strokeWidth={1.5}
+              />
+              {distData.filter(d => d.isOriginal).map((d, i) => (
+                <ReferenceLine key={i} x={d.bin} stroke={CHART_COLORS.success} strokeWidth={2} strokeDasharray="5 5" />
+              ))}
+            </AreaChart>
           </ResponsiveContainer>
         </motion.div>
       </div>
@@ -279,6 +331,13 @@ function RuinSection({ ruin }: { ruin: RuinSimulationResult }) {
     });
   }, [ruin]);
 
+  // Calculate Y domain for ruin paths
+  const allPathValues = [...ruin.survivePaths.flat(), ...ruin.ruinPaths.flat()];
+  const pathMinEq = Math.min(...allPathValues);
+  const pathMaxEq = Math.max(...allPathValues);
+  const pathPadding = (pathMaxEq - pathMinEq) * 0.15;
+  const ruinYDomain: [number, number] = [Math.min(pathMinEq - pathPadding, 0), pathMaxEq + pathPadding];
+
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
       <div className="glass-card p-4 space-y-3">
@@ -300,14 +359,17 @@ function RuinSection({ ruin }: { ruin: RuinSimulationResult }) {
         {/* Ruin paths */}
         {pathData.length > 0 && (
           <div className="chart-container">
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
               Caminos de Simulación (Supervivencia vs Ruina)
             </h3>
+            <div className="text-[10px] text-muted-foreground mb-2">
+              Verde = survive, Rojo = ruin
+            </div>
             <ResponsiveContainer width="100%" height={260}>
               <LineChart data={pathData}>
                 <CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.grid} />
                 <XAxis dataKey="x" stroke={CHART_COLORS.textDim} tick={{ fontSize: 10 }} />
-                <YAxis stroke={CHART_COLORS.textDim} tick={{ fontSize: 10 }} tickFormatter={v => formatNumber(v)} />
+                <YAxis stroke={CHART_COLORS.textDim} tick={{ fontSize: 10 }} tickFormatter={v => formatNumber(v)} domain={ruinYDomain} />
                 <Tooltip {...CHART_TOOLTIP_STYLE} />
                 {ruin.survivePaths.map((_, i) => (
                   <Line key={`s_${i}`} dataKey={`s_${i}`} stroke={CHART_COLORS.primary} strokeWidth={0.7} strokeOpacity={0.5} dot={false} isAnimationActive={false} />
@@ -323,9 +385,12 @@ function RuinSection({ ruin }: { ruin: RuinSimulationResult }) {
         {/* Equity distribution */}
         {ruin.equityDistribution.length > 0 && (
           <div className="chart-container">
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
               Distribución de Equity Final
             </h3>
+            <div className="text-[10px] text-muted-foreground mb-2">
+              Frecuencia de resultados finales
+            </div>
             <ResponsiveContainer width="100%" height={260}>
               <BarChart data={ruin.equityDistribution}>
                 <CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.grid} />

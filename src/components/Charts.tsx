@@ -35,9 +35,12 @@ export function MonteCarloChart() {
 
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="chart-container">
-      <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-4">
+      <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
         Monte Carlo — Estrategia vs Azar
       </h3>
+      <div className="text-[10px] text-muted-foreground mb-2">
+        Líneas grises = miles de permutaciones aleatorias. Línea roja = estrategia real. Si está por encima = ventaja real.
+      </div>
       <div className="text-xs text-muted-foreground mb-2 font-mono">
         z-score: {analysis.monteCarloResult.zScore.toFixed(2)} • p-value: {analysis.monteCarloResult.pValue.toFixed(4)} • Percentil: {analysis.monteCarloResult.percentileBetter.toFixed(1)}%
       </div>
@@ -92,9 +95,12 @@ export function FitnessRadar() {
 
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="chart-container">
-      <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-4">
+      <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
         Radar de Componentes
       </h3>
+      <div className="text-[10px] text-muted-foreground mb-2">
+        Puntuación de cada componente del Edge Score (Monte Carlo, Consistencia IS/OOS, Fitness, Robustez).
+      </div>
       <ResponsiveContainer width="100%" height={280}>
         <RadarChart data={data}>
           <PolarGrid stroke={CHART_COLORS.grid} />
@@ -139,9 +145,12 @@ export function OOSComparison() {
 
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="chart-container">
-      <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-4">
+      <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
         IS vs OOS — Degradación
       </h3>
+      <div className="text-[10px] text-muted-foreground mb-2">
+        Compara rendimiento In-Sample vs múltiples Out-of-Sample. Si OOS ≈ IS = buena robustez.
+      </div>
       <ResponsiveContainer width="100%" height={280}>
         <BarChart data={data}>
           <CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.grid} />
@@ -184,9 +193,12 @@ export function StrategyComparisonScatter() {
 
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="chart-container">
-      <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-4">
+      <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
         Scatter — IS vs OOS Fitness
       </h3>
+      <div className="text-[10px] text-muted-foreground mb-2">
+        Eje X = IS, Eje Y = OOS. Estrategias cerca de la diagonal tienen buena consistencia. Por encima = mejor OOS.
+      </div>
       <ResponsiveContainer width="100%" height={280}>
         <ScatterChart>
           <CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.grid} />
@@ -240,9 +252,12 @@ export function EdgeDistribution() {
 
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="chart-container">
-      <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-4">
+      <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
         Distribución de Scores
       </h3>
+      <div className="text-[10px] text-muted-foreground mb-2">
+        Histograma de Edge Scores. 0-40: Sin ventaja, 40-55: Débil, 55-70: Moderada, 70-100: Fuerte.
+      </div>
       <ResponsiveContainer width="100%" height={200}>
         <BarChart data={data}>
           <CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.grid} />

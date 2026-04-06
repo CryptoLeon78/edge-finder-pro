@@ -54,7 +54,7 @@ export function FileUploader() {
             const eqFile = zip.file(equityFiles[0]);
             if (eqFile) {
               const buffer = await eqFile.async('arraybuffer');
-              const curve = parseDailyEquityBin(buffer);
+              const curve = parseDailyEquityBin(buffer, strategy.moneyManagement.initialCapital);
               if (curve.length > 0) setEquityCurve(strategy.id, curve);
             }
           }

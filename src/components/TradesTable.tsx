@@ -101,9 +101,15 @@ export function TradesTable() {
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="glass-card p-4 space-y-3">
       <div className="flex items-center justify-between">
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          Tabla de Operaciones ({filtered.length}{filtered.length !== trades.length ? ` / ${trades.length}` : ''})
-        </h3>
+        <div>
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Tabla de Operaciones ({filtered.length}{filtered.length !== trades.length ? ` / ${trades.length}` : ''})
+          </h3>
+          {/* Help text */}
+          <div className="text-[10px] text-muted-foreground mt-1">
+            Lista completa de trades con dirección, precio, P&L y duración. Usa filtros para analizar subconjuntos.
+          </div>
+        </div>
         <div className="flex items-center gap-3">
           <div className="flex gap-4 text-xs font-mono">
             <span className="text-success">Wins: {wins} ({filtered.length > 0 ? (wins / filtered.length * 100).toFixed(1) : 0}%)</span>

@@ -19,6 +19,11 @@ export function StrategyDetails() {
         Lógica de la Estrategia
       </h3>
 
+      {/* Help text */}
+      <div className="text-[10px] text-muted-foreground space-y-1">
+        <p>Detalles técnicos de la estrategia: señales, reglas de entrada/salida, indicadores y parámetros.</p>
+      </div>
+
       {/* Signals */}
       <div>
         <p className="text-xs font-medium text-muted-foreground mb-2">Señales</p>

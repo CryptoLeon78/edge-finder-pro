@@ -32,6 +32,12 @@ export function DrawdownPanel() {
         <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
           Análisis de Drawdown
         </h3>
+        {/* Help text */}
+        <div className="text-[10px] text-muted-foreground mb-3 space-y-1">
+          <p><span className="font-medium text-foreground">Max DD:</span> Mayor pérdida desde el último máximo. Mayor al 20% es señal de alerta.</p>
+          <p><span className="font-medium text-foreground">Recovery Factor:</span> NetProfit / MaxDD. &gt;2 es aceptable, &gt;4 es excelente.</p>
+          <p><span className="font-medium text-foreground">Calmar:</span> CAGR / MaxDD anualizado. Mide retorno ajustado por riesgo de cola.</p>
+        </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {[
             { label: 'Max DD %', value: `${dd.maxDrawdownPct.toFixed(2)}%`, danger: dd.maxDrawdownPct > 20 },

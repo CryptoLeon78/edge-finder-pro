@@ -73,6 +73,15 @@ export function MetricsGrid() {
     <div className="space-y-4 animate-fade-in">
       {analysis && <EdgeScoreCard analysis={analysis} />}
 
+      {/* Help text */}
+      <div className="glass-card p-3">
+        <div className="text-[10px] text-muted-foreground space-y-1">
+          <p><span className="font-medium text-foreground">Edge Score:</span> Puntuación 0-100 que combina Monte Carlo, Consistencia IS/OOS, Fitness y Robustez.</p>
+          <p><span className="font-medium text-foreground">Fitness IS:</span> Rendimiento dentro de muestra (datos usados para desarrollar la estrategia). &gt;70% es bueno.</p>
+          <p><span className="font-medium text-foreground">Fitness OOS:</span> Rendimiento fuera de muestra (datos nunca vistos). &gt;70% indica robustez real.</p>
+        </div>
+      </div>
+
       <div className="terminal-grid grid-cols-2 md:grid-cols-4">
         <MetricCard
           label="Símbolo"

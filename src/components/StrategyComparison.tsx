@@ -123,6 +123,12 @@ export function StrategyComparisonTable() {
         </button>
       </div>
 
+      {/* Help text */}
+      <div className="text-[10px] text-muted-foreground space-y-1">
+        <p><span className="font-medium text-foreground">Comparación:</span> Ranking de estrategias por Edge Score. Permite comparar múltiples estrategias simultáneamente.</p>
+        <p><span className="font-medium text-foreground">Veredicto:</span> strong_edge (&gt;70), moderate_edge (55-70), weak_edge (40-55), monkey (&lt;40).</p>
+      </div>
+
       <div className="overflow-x-auto">
         <table className="w-full text-xs font-mono">
           <thead>

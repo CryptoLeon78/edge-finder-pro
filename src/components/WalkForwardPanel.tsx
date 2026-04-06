@@ -74,6 +74,12 @@ export function WalkForwardPanel() {
           </div>
         </div>
 
+        {/* Help text */}
+        <div className="text-[10px] text-muted-foreground space-y-1 pt-2 border-t border-border">
+          <p><span className="font-medium text-foreground">Walk-Forward:</span> Valida la estrategia dividiendo el historial en ventanas IS/OOS sucesivas. Simula cómo habría funcionado en el futuro.</p>
+          <p><span className="font-medium text-foreground">Degradación:</span> Diferencia entre rendimiento IS y OOS. &lt;20% es aceptable, &gt;50% indica overfitting.</p>
+        </div>
+
         {/* KPI Summary */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {[

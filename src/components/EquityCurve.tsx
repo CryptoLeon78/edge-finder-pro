@@ -48,6 +48,12 @@ export function EquityCurveChart() {
   const minEquity = Math.min(...data.map(d => d.equity));
   const maxEquity = Math.max(...data.map(d => d.equity));
   const initialEquity = data[0]?.equity || 0;
+  const padding = (maxEquity - minEquity) * 0.1;
+
+  const yDomain = [
+    Math.min(initialEquity * 0.95, minEquity - padding),
+    maxEquity + padding
+  ];
 
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="chart-container">
@@ -68,7 +74,7 @@ export function EquityCurveChart() {
           </defs>
           <CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.grid} />
           <XAxis dataKey="date" stroke={CHART_COLORS.textDim} tick={{ fontSize: 9 }} interval="preserveStartEnd" />
-          <YAxis stroke={CHART_COLORS.textDim} tick={{ fontSize: 10 }} tickFormatter={v => formatNumber(v)} />
+          <YAxis stroke={CHART_COLORS.textDim} tick={{ fontSize: 10 }} tickFormatter={v => formatNumber(v)} domain={yDomain} />
           <Tooltip {...CHART_TOOLTIP_STYLE} formatter={(v: number) => [`$${formatNumber(v)}`, 'Equity']} />
           <ReferenceLine y={initialEquity} stroke={CHART_COLORS.muted} strokeDasharray="5 5" />
           <Area

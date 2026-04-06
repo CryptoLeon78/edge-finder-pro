@@ -45,6 +45,12 @@ export function RandomnessPanel() {
             Score: {analysis.overallRandomnessScore}/100
           </span>
         </div>
+        {/* Help text */}
+        <div className="text-[10px] text-muted-foreground mb-3 space-y-1">
+          <p><span className="font-medium text-foreground">Runs Test:</span> Verifica si la secuencia win/loss es aleatoria o tiene patrones (z&gt;1.96 indica no-aleatorio).</p>
+          <p><span className="font-medium text-foreground">Autocorrelación:</span> Mide si un trade influye en el siguiente. Coeff &gt;0.06 indica dependencia.</p>
+          <p><span className="font-medium text-foreground">Distribución:</span> Los mercados no son normales. Skew + = mayores ganancias; Kurt + = colas gordas.</p>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <div className="p-3 bg-surface-1 rounded space-y-1">
             <div className="flex items-center justify-between">

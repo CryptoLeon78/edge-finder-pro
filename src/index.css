@@ -192,3 +192,13 @@
 ::-webkit-scrollbar-thumb:hover {
   background: hsl(220 14% 30%);
 }
+
+/* Horizontal scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-horizontal {
+  height: 8px;
+}
