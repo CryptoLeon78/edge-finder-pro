@@ -56,6 +56,12 @@ export function useAccessCheck() {
       return;
     }
 
+    // Superuser bypass - immediate access without request
+    if (SUPERUSER_EMAILS.includes(email.toLowerCase())) {
+      setAccess({ status: 'approved', email, expiresAt: null });
+      return;
+    }
+
     try {
       // Also check rejected status so we can show the right screen
       const { data, error } = await supabase
