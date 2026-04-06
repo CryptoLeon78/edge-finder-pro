@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Activity, BarChart3, Shield } from 'lucide-react';
+import { Activity, BarChart3, Shield, CreditCard, Loader2, ExternalLink } from 'lucide-react';
 import { FileUploader, StrategyList } from '@/components/FileUploader';
 import { DatasetUploader } from '@/components/DatasetUploader';
 import { DashboardSummary } from '@/components/Dashboard';
