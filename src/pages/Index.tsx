@@ -62,6 +62,19 @@ const Index = () => {
           </div>
           <div className="flex items-center gap-4 text-xs text-muted-foreground">
             <AccessBanner expiresAt={access.expiresAt} subscriptionEnd={access.subscriptionEnd} />
+            {access.status === 'subscribed' && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleManageSubscription}
+                disabled={portalLoading}
+                className="gap-1.5 text-xs h-7"
+              >
+                {portalLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <CreditCard className="w-3 h-3" />}
+                Gestionar Suscripción
+                <ExternalLink className="w-2.5 h-2.5" />
+              </Button>
+            )}
             {hasStrategies && <PDFExportButton />}
             <div className="flex items-center gap-1.5">
               <Activity className="w-3 h-3" />
