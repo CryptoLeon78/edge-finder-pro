@@ -13,6 +13,7 @@ interface AccessState {
 }
 
 const STORAGE_KEY = 'edgevalidator_access_email';
+const SUPERUSER_EMAILS = ['ivanaza8@gmail.com'];
 
 function getDaysRemaining(expiresAt: string): number {
   const now = new Date();
