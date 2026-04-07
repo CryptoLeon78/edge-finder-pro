@@ -6,6 +6,7 @@ const corsHeaders = {
 };
 
 const ADMIN_EMAIL = "ivanaza8@gmail.com";
+const FROM_DOMAIN = "ildaambuef.resend.app"; // Tu dominio verificado en Resend
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -101,7 +102,7 @@ Deno.serve(async (req) => {
           "X-Connection-Api-Key": resendKey,
         },
         body: JSON.stringify({
-          from: "EdgeValidator <onboarding@resend.dev>",
+          from: `EdgeValidator <noreply@${FROM_DOMAIN}>`,
           to: [ADMIN_EMAIL],
           subject: `🛡️ Solicitud de acceso: ${request.email}`,
           html: emailHtml,

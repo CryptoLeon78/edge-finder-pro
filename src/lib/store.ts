@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type { SQXStrategy } from './sqx-parser';
 import type { EdgeAnalysis } from './statistics';
 import type { TradeOrder, DailyEquityPoint } from './binary-parser';
+import type { SubscriptionPlan } from './subscriptions';
 
 export interface DatasetInfo {
   id: string;
@@ -20,6 +21,7 @@ export interface ParsedDataset {
 }
 
 interface AppState {
+  subscriptionPlan: SubscriptionPlan;
   strategies: SQXStrategy[];
   analyses: Map<string, EdgeAnalysis>;
   trades: Map<string, TradeOrder[]>;
@@ -30,6 +32,7 @@ interface AppState {
   selectedStrategyIds: string[];
   isLoading: boolean;
 
+  setSubscriptionPlan: (plan: SubscriptionPlan) => void;
   addStrategies: (strategies: SQXStrategy[]) => void;
   removeStrategy: (id: string) => void;
   clearAll: () => void;
@@ -45,6 +48,7 @@ interface AppState {
 }
 
 export const useAppStore = create<AppState>((set) => ({
+  subscriptionPlan: 'free',
   strategies: [],
   analyses: new Map(),
   trades: new Map(),
@@ -54,6 +58,8 @@ export const useAppStore = create<AppState>((set) => ({
   activeDatasetId: null,
   selectedStrategyIds: [],
   isLoading: false,
+
+  setSubscriptionPlan: (plan) => set({ subscriptionPlan: plan }),
 
   addStrategies: (newStrategies) =>
     set((state) => ({

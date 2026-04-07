@@ -16,6 +16,7 @@ import { WalkForwardPanel } from '@/components/WalkForwardPanel';
 import { CorrelationPanel } from '@/components/CorrelationAnalysis';
 import { MonteCarloAdvancedPanel } from '@/components/MonteCarloAdvanced';
 import { PDFExportButton } from '@/components/PDFExport';
+import { PricingPanel } from '@/components/PricingPanel';
 import { AccessBanner, useAccessCheck } from '@/components/AccessGate';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useAppStore } from '@/lib/store';
@@ -189,6 +190,9 @@ const Index = () => {
                   <TabsTrigger value="detalle" className="text-xs data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
                     Detalle
                   </TabsTrigger>
+                  <TabsTrigger value="precios" className="text-xs data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
+                    Precios
+                  </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="resumen" className="space-y-4 mt-4">
@@ -236,6 +240,10 @@ const Index = () => {
 
                 <TabsContent value="detalle" className="space-y-4 mt-4">
                   <StrategyDetails />
+                </TabsContent>
+
+                <TabsContent value="precios" className="space-y-4 mt-4">
+                  <PricingPanel />
                 </TabsContent>
               </Tabs>
             </div>
