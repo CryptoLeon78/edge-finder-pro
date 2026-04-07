@@ -340,7 +340,7 @@ function RuinSection({ ruin }: { ruin: RuinSimulationResult }) {
   const pathMinEq = Math.min(...allPathValues);
   const pathMaxEq = Math.max(...allPathValues);
   const pathPadding = (pathMaxEq - pathMinEq) * 0.15;
-  const ruinYDomain: [number, number] = [Math.min(pathMinEq - pathPadding, 0), pathMaxEq + pathPadding];
+  const ruinYDomain: [number, number] = [Math.max(Math.min(pathMinEq - pathPadding, 0), 50000), pathMaxEq + pathPadding];
 
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
