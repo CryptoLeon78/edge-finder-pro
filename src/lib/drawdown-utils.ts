@@ -1,6 +1,7 @@
 // ============ DRAWDOWN & RETURN ANALYSIS UTILITIES ============
 
 import type { TradeOrder, DailyEquityPoint } from './binary-parser';
+import { THRESHOLDS } from './thresholds';
 
 export interface DrawdownPeriod {
   startDate: number;
@@ -235,79 +236,81 @@ export function checkMetricAlerts(
 ): MetricAlert[] {
   const alerts: MetricAlert[] = [];
 
-  if (analysis.maxDrawdownPct > 30) {
+  const { alerts: t } = THRESHOLDS;
+
+  if (analysis.maxDrawdownPct > t.maxDrawdownDanger) {
     alerts.push({
       metric: 'Max Drawdown',
       value: analysis.maxDrawdownPct,
-      threshold: 30,
+      threshold: t.maxDrawdownDanger,
       severity: 'danger',
-      message: `Drawdown máximo ${analysis.maxDrawdownPct.toFixed(1)}% excede el umbral de 30%`,
+      message: `Drawdown máximo ${analysis.maxDrawdownPct.toFixed(1)}% excede el umbral de ${t.maxDrawdownDanger}%`,
     });
-  } else if (analysis.maxDrawdownPct > 20) {
+  } else if (analysis.maxDrawdownPct > t.maxDrawdownWarning) {
     alerts.push({
       metric: 'Max Drawdown',
       value: analysis.maxDrawdownPct,
-      threshold: 20,
+      threshold: t.maxDrawdownWarning,
       severity: 'warning',
       message: `Drawdown máximo ${analysis.maxDrawdownPct.toFixed(1)}% cercano al umbral`,
     });
   }
 
-  if (analysis.recoveryFactor < 1) {
+  if (analysis.recoveryFactor < t.recoveryFactorDanger) {
     alerts.push({
       metric: 'Recovery Factor',
       value: analysis.recoveryFactor,
-      threshold: 1,
+      threshold: t.recoveryFactorDanger,
       severity: 'danger',
-      message: `Factor de recuperación ${analysis.recoveryFactor.toFixed(2)} < 1.0`,
+      message: `Factor de recuperación ${analysis.recoveryFactor.toFixed(2)} < ${t.recoveryFactorDanger}.0`,
     });
   }
 
-  if (analysis.maxDrawdownDuration > 180) {
+  if (analysis.maxDrawdownDuration > t.maxDrawdownDurationDays) {
     alerts.push({
       metric: 'DD Duration',
       value: analysis.maxDrawdownDuration,
-      threshold: 180,
+      threshold: t.maxDrawdownDurationDays,
       severity: 'warning',
       message: `Drawdown máximo duró ${analysis.maxDrawdownDuration} días`,
     });
   }
 
-  if (edgeScore < 35) {
+  if (edgeScore < t.edgeScoreDanger) {
     alerts.push({
       metric: 'Edge Score',
       value: edgeScore,
-      threshold: 35,
+      threshold: t.edgeScoreDanger,
       severity: 'danger',
       message: `Score ${edgeScore.toFixed(0)} indica ausencia de ventaja`,
     });
   }
 
-  if (winRate < 40) {
+  if (winRate < t.winRateWarning) {
     alerts.push({
       metric: 'Win Rate',
       value: winRate,
-      threshold: 40,
+      threshold: t.winRateWarning,
       severity: 'warning',
-      message: `Win rate ${winRate.toFixed(1)}% por debajo del 40%`,
+      message: `Win rate ${winRate.toFixed(1)}% por debajo del ${t.winRateWarning}%`,
     });
   }
 
-  if (profitFactor < 1.2 && profitFactor > 0) {
+  if (profitFactor < t.profitFactorWarning && profitFactor > 0) {
     alerts.push({
       metric: 'Profit Factor',
       value: profitFactor,
-      threshold: 1.2,
+      threshold: t.profitFactorWarning,
       severity: 'warning',
-      message: `Profit factor ${profitFactor.toFixed(2)} bajo (< 1.2)`,
+      message: `Profit factor ${profitFactor.toFixed(2)} bajo (< ${t.profitFactorWarning})`,
     });
   }
 
-  if (trades.length < 100) {
+  if (trades.length < t.sampleSizeInfo) {
     alerts.push({
       metric: 'Sample Size',
       value: trades.length,
-      threshold: 100,
+      threshold: t.sampleSizeInfo,
       severity: 'info',
       message: `Solo ${trades.length} trades — muestra pequeña`,
     });

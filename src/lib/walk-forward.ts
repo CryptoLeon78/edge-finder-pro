@@ -1,6 +1,7 @@
 // ============ WALK-FORWARD SIMULATION ============
 
 import type { TradeOrder } from './binary-parser';
+import { THRESHOLDS } from './thresholds';
 
 export interface WFWindow {
   windowIndex: number;
@@ -35,16 +36,16 @@ function profitFactor(trades: TradeOrder[]): number {
 }
 
 /**
- * Run walk-forward analysis by splitting trades into sliding IS/OOS windows.
  * @param trades All trades sorted by closeTime
  * @param numWindows Number of WF windows (default 5)
- * @param oosRatio Fraction of each window used as OOS (default 0.3)
+ * @param oosRatio Fraction of each window used as OOS
  */
 export function runWalkForward(
   trades: TradeOrder[],
   numWindows = 5,
-  oosRatio = 0.3
+  oosRatio = THRESHOLDS.walkForward.oosRatio
 ): WalkForwardResult {
+  const { walkForward: t } = THRESHOLDS;
   if (trades.length < 30) {
     return { windows: [], avgDegradation: 0, oosEfficiency: 0, consistency: 0, totalISPnl: 0, totalOOSPnl: 0 };
   }
@@ -103,7 +104,7 @@ export function runWalkForward(
   const avgDeg = degradations.length > 0 ? degradations.reduce((s, d) => s + d, 0) / degradations.length : 0;
 
   // Consistency: how many OOS windows maintain >50% of IS performance
-  const consistentWindows = windows.filter(w => w.degradation > 0.5).length;
+  const consistentWindows = windows.filter(w => w.degradation > THRESHOLDS.walkForward.degradationThreshold).length;
   const consistency = windows.length > 0 ? (consistentWindows / windows.length) * 100 : 0;
 
   return {

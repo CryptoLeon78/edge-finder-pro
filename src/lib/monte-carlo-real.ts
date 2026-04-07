@@ -2,6 +2,7 @@
 // All calculations based on real trades - no hardcoded values
 
 import type { TradeOrder } from './binary-parser';
+import { THRESHOLDS } from './thresholds';
 
 // ============ TYPES ============
 
@@ -62,9 +63,10 @@ export interface RuinSimulationResult {
 export function runPermutationMC(
   trades: TradeOrder[],
   initialCapital: number,
-  iterations = 2000,
-  chartPaths = 30
+  iterations = THRESHOLDS.monteCarlo.iterations,
+  chartPaths = THRESHOLDS.monteCarlo.chartPaths
 ): PermutationMCResult {
+  const { monteCarlo: t } = THRESHOLDS;
   if (trades.length < 5) {
     return emptyMCResult(iterations);
   }
@@ -105,12 +107,12 @@ export function runPermutationMC(
   // Confidence intervals on final equity
   const sortedEquities = [...randomFinalEquities].sort((a, b) => a - b);
   const ci95: [number, number] = [
-    sortedEquities[Math.floor(iterations * 0.025)],
-    sortedEquities[Math.floor(iterations * 0.975)],
+    sortedEquities[Math.floor(iterations * t.confidenceInterval95[0])],
+    sortedEquities[Math.floor(iterations * t.confidenceInterval95[1])],
   ];
   const ci99: [number, number] = [
-    sortedEquities[Math.floor(iterations * 0.005)],
-    sortedEquities[Math.floor(iterations * 0.995)],
+    sortedEquities[Math.floor(iterations * t.confidenceInterval99[0])],
+    sortedEquities[Math.floor(iterations * t.confidenceInterval99[1])],
   ];
 
   return {
@@ -194,15 +196,15 @@ export function analyzeExpectancy(trades: TradeOrder[]): ExpectancyAnalysis {
 export function simulateRuin(
   trades: TradeOrder[],
   initialCapital: number,
-  ruinThresholdPct = 0.5, // 50% drawdown = ruin
-  iterations = 5000,
+  ruinThresholdPct = THRESHOLDS.monteCarlo.ruinThreshold,
+  iterations = THRESHOLDS.monteCarlo.ruinIterations,
   tradeHorizon?: number,
-  chartPaths = 20
+  chartPaths = THRESHOLDS.monteCarlo.chartPaths
 ): RuinSimulationResult {
   if (trades.length < 5) return emptyRuinResult(iterations, ruinThresholdPct);
 
   const pnls = trades.map(t => t.pnlMoney);
-  const horizon = tradeHorizon || pnls.length * 3; // simulate 3x the history
+  const horizon = tradeHorizon || pnls.length * THRESHOLDS.monteCarlo.tradeHorizonMultiplier;
   const ruinLevel = initialCapital * (1 - ruinThresholdPct);
 
   let ruinCount = 0;
@@ -242,7 +244,7 @@ export function simulateRuin(
   const sorted = [...finalEquities].sort((a, b) => a - b);
   const min = sorted[0];
   const max = sorted[sorted.length - 1];
-  const bucketCount = 20;
+  const bucketCount = THRESHOLDS.monteCarlo.bucketCount;
   const bucketWidth = (max - min) / bucketCount || 1;
   const equityDistribution = Array.from({ length: bucketCount }, (_, i) => {
     const lo = min + i * bucketWidth;

@@ -10,6 +10,7 @@ import {
   type PermutationMCResult, type ExpectancyAnalysis, type RuinSimulationResult,
 } from '@/lib/monte-carlo-real';
 import { CHART_COLORS, CHART_TOOLTIP_STYLE, formatNumber } from '@/lib/chart-utils';
+import { THRESHOLDS } from '@/lib/thresholds';
 import { Button } from '@/components/ui/button';
 import { Play, TrendingUp, AlertTriangle, Target } from 'lucide-react';
 
@@ -150,7 +151,8 @@ export function MonteCarloAdvancedPanel() {
 }
 
 function ExpectancySection({ exp }: { exp: ExpectancyAnalysis }) {
-  const kellyColor = exp.kellyCriterion > 0.25 ? 'text-warning' :
+  const { ui: t } = THRESHOLDS;
+  const kellyColor = exp.kellyCriterion > t.kellyWarning ? 'text-warning' :
     exp.kellyCriterion > 0 ? 'text-success' : 'text-destructive';
 
   const expectancyColor = exp.expectancy > 0 ? 'text-success' : 'text-destructive';
@@ -185,8 +187,8 @@ function ExpectancySection({ exp }: { exp: ExpectancyAnalysis }) {
         <span className="font-semibold text-foreground">Kelly:</span>
         {exp.kellyCriterion <= 0
           ? ' La estrategia no tiene ventaja positiva. No se recomienda operar.'
-          : exp.kellyCriterion > 0.25
-            ? ` Alto apalancamiento (${(exp.kellyCriterion * 100).toFixed(1)}%). Se recomienda usar ½ Kelly (${(exp.kellyHalf * 100).toFixed(1)}%) o ¼ Kelly para reducir volatilidad.`
+          : exp.kellyCriterion > THRESHOLDS.ui.kellyWarning
+            ? ` Alto apalancamiento (${(exp.kellyCriterion * 100).toFixed(1)}%). Se recomienda usar ½ Kelly (${(exp.kellyHalf * 100).toFixed(1)}%) o ¼ Kelly para reducir volatilidades.`
             : ` Fracción óptima: ${(exp.kellyCriterion * 100).toFixed(1)}%. Se recomienda ½ Kelly (${(exp.kellyHalf * 100).toFixed(1)}%) para mayor estabilidad.`
         }
       </div>
@@ -223,8 +225,9 @@ function MCResultsSection({ mc }: { mc: PermutationMCResult }) {
     });
   }, [mc]);
 
-  const eqColor = mc.pValueEquity < 0.05 ? 'text-success' : 'text-warning';
-  const ddColor = mc.pValueDD < 0.05 ? 'text-success' : 'text-warning';
+  const { ui: t } = THRESHOLDS;
+  const eqColor = mc.pValueEquity < t.statisticalSignificance ? 'text-success' : 'text-warning';
+  const ddColor = mc.pValueDD < t.statisticalSignificance ? 'text-success' : 'text-warning';
 
   // Calculate Y domain for better scale
   const allValues = mc.permutedEquities.flat();
@@ -315,8 +318,9 @@ function MCResultsSection({ mc }: { mc: PermutationMCResult }) {
 }
 
 function RuinSection({ ruin }: { ruin: RuinSimulationResult }) {
-  const ruinColor = ruin.probabilityOfRuin < 0.05 ? 'text-success' :
-    ruin.probabilityOfRuin < 0.2 ? 'text-warning' : 'text-destructive';
+  const { ui: t } = THRESHOLDS;
+  const ruinColor = ruin.probabilityOfRuin < t.ruinProbabilitySuccess ? 'text-success' :
+    ruin.probabilityOfRuin < t.ruinProbabilityWarning ? 'text-warning' : 'text-destructive';
 
   // Path data
   const pathData = useMemo(() => {
@@ -369,7 +373,7 @@ function RuinSection({ ruin }: { ruin: RuinSimulationResult }) {
               <LineChart data={pathData}>
                 <CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.grid} />
                 <XAxis dataKey="x" stroke={CHART_COLORS.textDim} tick={{ fontSize: 10 }} />
-                <YAxis stroke={CHART_COLORS.textDim} tick={{ fontSize: 10 }} tickFormatter={v => formatNumber(v)} domain={ruinYDomain} />
+                <YAxis stroke={CHART_COLORS.textDim} tick={{ fontSize: 9 }} tickFormatter={v => v >= 1000 ? `$${(v/1000).toFixed(0)}K` : `$${v.toFixed(0)}`} domain={ruinYDomain} />
                 <Tooltip {...CHART_TOOLTIP_STYLE} />
                 {ruin.survivePaths.map((_, i) => (
                   <Line key={`s_${i}`} dataKey={`s_${i}`} stroke={CHART_COLORS.primary} strokeWidth={0.7} strokeOpacity={0.5} dot={false} isAnimationActive={false} />

@@ -1,6 +1,7 @@
 // ============ ADVANCED RANDOMNESS TESTS ============
 
 import type { TradeOrder } from './binary-parser';
+import { THRESHOLDS } from './thresholds';
 
 export interface RunsTestResult {
   totalRuns: number;
@@ -89,7 +90,8 @@ export function runsTest(trades: TradeOrder[]): RunsTestResult {
 
 // ============ AUTOCORRELATION ============
 
-export function autocorrelation(trades: TradeOrder[], maxLag = 20): AutocorrelationResult {
+export function autocorrelation(trades: TradeOrder[], maxLag = THRESHOLDS.randomness.maxLag): AutocorrelationResult {
+  const { randomness: t } = THRESHOLDS;
   const returns = trades.map(t => t.pnlMoney);
   const n = returns.length;
   
@@ -102,7 +104,7 @@ export function autocorrelation(trades: TradeOrder[], maxLag = 20): Autocorrelat
   
   const lags: number[] = [];
   const coefficients: number[] = [];
-  const threshold = 1.96 / Math.sqrt(n); // 95% confidence
+  const threshold = t.significanceThreshold / Math.sqrt(n); // 95% confidence
   let hasSignificant = false;
   
   for (let lag = 1; lag <= Math.min(maxLag, Math.floor(n / 4)); lag++) {
@@ -212,8 +214,9 @@ export function analyzeRandomness(trades: TradeOrder[]): RandomnessAnalysis {
   if (ac.hasSignificantLag) score += 10;
   
   // Distribution: non-normal with positive skew or fat tails
+  const { randomness: t } = THRESHOLDS;
   if (!dist.isNormal) score += 10;
-  if (dist.skewness > 0.3) score += 10; // positive skew = bigger wins than losses
+  if (dist.skewness > t.skewnessThreshold) score += 10; // positive skew = bigger wins than losses
   if (dist.mean > 0) score += 5;
   
   return {

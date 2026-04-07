@@ -1,4 +1,5 @@
 import type { SQXStrategy } from './sqx-parser';
+import { THRESHOLDS } from './thresholds';
 
 // ============ TYPES ============
 
@@ -129,15 +130,18 @@ function buildEdgeComponents(
 }
 
 function classifyEdge(score: number): { verdict: EdgeAnalysis['verdict']; verdictLabel: string; verdictColor: string } {
-  if (score >= 75) return { verdict: 'strong_edge', verdictLabel: 'Ventaja Fuerte', verdictColor: 'success' };
-  if (score >= 55) return { verdict: 'moderate_edge', verdictLabel: 'Ventaja Moderada', verdictColor: 'warning' };
-  if (score >= 35) return { verdict: 'weak_edge', verdictLabel: 'Ventaja Débil', verdictColor: 'accent' };
+  const { edgeClassification: t } = THRESHOLDS;
+  if (score >= t.strongEdge) return { verdict: 'strong_edge', verdictLabel: 'Ventaja Fuerte', verdictColor: 'success' };
+  if (score >= t.moderateEdge) return { verdict: 'moderate_edge', verdictLabel: 'Ventaja Moderada', verdictColor: 'warning' };
+  if (score >= t.weakEdge) return { verdict: 'weak_edge', verdictLabel: 'Ventaja Débil', verdictColor: 'accent' };
   return { verdict: 'monkey', verdictLabel: 'Sin Ventaja (Azar)', verdictColor: 'danger' };
 }
 
 // ============ MONTE CARLO ============
 
-function runMonteCarloSimulation(strategy: SQXStrategy, iterations = 1000): MonteCarloResult {
+function runMonteCarloSimulation(strategy: SQXStrategy): MonteCarloResult {
+  const { monteCarlo: t } = THRESHOLDS;
+  const iterations = t.iterations;
   const fitnessIS = strategy.fitness.IS || 0;
   const fitnessOOS = strategy.fitness.OOS || 0;
   const originalPerformance = (fitnessIS + fitnessOOS) / 2;

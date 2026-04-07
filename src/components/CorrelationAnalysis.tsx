@@ -1,13 +1,14 @@
 import { useMemo, useState } from 'react';
 import {
-  ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip,
-  CartesianGrid, LineChart, Line, Legend,
+  ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip,
+  CartesianGrid, ReferenceLine, Legend,
 } from 'recharts';
 import { motion } from 'framer-motion';
 import { GitBranch } from 'lucide-react';
 import { useAppStore } from '@/lib/store';
 import { analyzePortfolio, type PortfolioAnalysis, type AnalysisPeriod } from '@/lib/correlation-utils';
 import { CHART_COLORS, CHART_TOOLTIP_STYLE, formatNumber } from '@/lib/chart-utils';
+import { THRESHOLDS } from '@/lib/thresholds';
 
 interface EquityPoint {
   date: string;
@@ -19,6 +20,8 @@ export function CorrelationPanel() {
   const { strategies, trades: tradesMap, equityCurves, selectedStrategyIds } = useAppStore();
   const selected = strategies.filter(s => selectedStrategyIds.includes(s.id));
   const [period, setPeriod] = useState<AnalysisPeriod>('all');
+
+  const { correlation: corrT, ui: uiT } = THRESHOLDS;
 
   const portfolio = useMemo<PortfolioAnalysis & { alphaDecay: any } | null>(() => {
     if (selected.length < 2) return null;
@@ -37,7 +40,7 @@ export function CorrelationPanel() {
 
   // Calculate IS and OOS equity curves separately (consecutive)
   const equityData = useMemo(() => {
-    if (selected.length < 2) return { is: [], oos: [], combined: [] };
+    if (selected.length < 2) return { is: [], oos: [], combined: [], totalInitial: 0 };
     
     const totalInitial = selected.reduce((s, s2) => s + s2.moneyManagement.initialCapital, 0);
     
@@ -112,7 +115,7 @@ export function CorrelationPanel() {
       return { date, equity: cumAll };
     });
 
-    return { is: isCurve, oos: oosCurve, combined: combinedCurve };
+    return { is: isCurve, oos: oosCurve, combined: combinedCurve, totalInitial };
   }, [selected, tradesMap]);
 
   if (!portfolio) {
@@ -127,32 +130,51 @@ export function CorrelationPanel() {
 
   const getCorrColor = (val: number): string => {
     const abs = Math.abs(val);
-    if (abs > 0.7) return val > 0 ? 'bg-destructive/30 text-destructive' : 'bg-info/30 text-info';
-    if (abs > 0.4) return val > 0 ? 'bg-warning/20 text-warning' : 'bg-info/20 text-info';
+    if (abs > corrT.highCorrelation) return val > 0 ? 'bg-destructive/30 text-destructive' : 'bg-info/30 text-info';
+    if (abs > corrT.mediumCorrelation) return val > 0 ? 'bg-warning/20 text-warning' : 'bg-info/20 text-info';
     return 'bg-success/10 text-success';
   };
 
-  const divColor = diversificationScore >= 70 ? 'text-success' : diversificationScore >= 40 ? 'text-warning' : 'text-destructive';
+  const divColor = diversificationScore >= uiT.diversificationSuccess ? 'text-success' : diversificationScore >= uiT.diversificationWarning ? 'text-warning' : 'text-destructive';
 
-  // Calculate domain
-  const allValues = [
-    ...equityData.is.map(p => p.equity),
-    ...equityData.oos.map(p => p.equity),
-    ...equityData.combined.map(p => p.equity)
-  ];
-  const minEq = Math.min(...allValues.filter(v => v > 0), 100000);
-  const maxEq = Math.max(...allValues);
-  const padding = (maxEq - minEq) * 0.1;
-  const domain: [number, number] = [minEq - padding, maxEq + padding];
-
-  // Merge IS and OOS for chart (consecutive display)
+  // Merge IS and OOS for chart - OOS shifted to appear after IS
   const chartData = useMemo(() => {
-    const result = [...equityData.is];
-    if (result.length > 0 && equityData.oos.length > 0) {
-      result.push({ date: '---', equity: result[result.length - 1].equity, period: 'DIVIDER' });
-    }
-    return [...result, ...equityData.oos];
-  }, [equityData]);
+    if (!equityData.is || !equityData.oos) return [];
+    if (period === 'is') return equityData.is;
+    if (period === 'oos') return equityData.oos;
+    
+    // "all" - shift OOS dates to appear after IS
+    const isLength = equityData.is.length;
+    const result: { date: string; equity: number; period: string }[] = [];
+    
+    // Add IS data
+    equityData.is.forEach((d, i) => {
+      result.push({ date: `${i}`, equity: d.equity, period: 'IS' });
+    });
+    
+    // Add divider
+    result.push({ date: 'divider', equity: equityData.is[isLength - 1]?.equity || 0, period: 'DIVIDER' });
+    
+    // Add OOS data shifted by IS length
+    equityData.oos.forEach((d, i) => {
+      result.push({ date: `${isLength + i}`, equity: d.equity, period: 'OOS' });
+    });
+    
+    return result;
+  }, [equityData, period]);
+
+  // Domain - use combined domain for all periods
+  const domain: [number, number] = useMemo(() => {
+    const allValues = [
+      ...(equityData.is?.map(p => p.equity) || []),
+      ...(equityData.oos?.map(p => p.equity) || [])
+    ];
+    const init = equityData.totalInitial || 0;
+    const min = allValues.length > 0 ? Math.min(...allValues, init) : init;
+    const max = allValues.length > 0 ? Math.max(...allValues) : init;
+    const pad = (max - min) * 0.1;
+    return [min - pad, max + pad];
+  }, [equityData.is, equityData.oos, equityData.totalInitial]);
 
   return (
     <div className="space-y-4">
@@ -173,7 +195,7 @@ export function CorrelationPanel() {
                 onChange={e => setPeriod(e.target.value as AnalysisPeriod)}
                 className="bg-surface-2 border border-border rounded px-2 py-1 text-xs font-mono"
               >
-                <option value="all">Todos</option>
+                <option value="all">Ambos</option>
                 <option value="is">IS</option>
                 <option value="oos">OOS</option>
               </select>
@@ -253,7 +275,7 @@ export function CorrelationPanel() {
             </div>
             <div className="p-2 bg-surface-1 rounded">
               <span className="text-muted-foreground">PF:</span>
-              <span className={`ml-1 ${metrics.profitFactor >= 1.5 ? 'text-success' : metrics.profitFactor >= 1 ? 'text-warning' : 'text-destructive'}`}>
+              <span className={`ml-1 ${metrics.profitFactor >= uiT.profitFactorSuccess ? 'text-success' : metrics.profitFactor >= uiT.profitFactorWarning ? 'text-warning' : 'text-destructive'}`}>
                 {metrics.profitFactor.toFixed(2)}
               </span>
             </div>
@@ -265,7 +287,7 @@ export function CorrelationPanel() {
             </div>
             <div className="p-2 bg-surface-1 rounded">
               <span className="text-muted-foreground">Sharpe:</span>
-              <span className={`ml-1 ${metrics.sharpeRatio >= 1 ? 'text-success' : metrics.sharpeRatio >= 0.5 ? 'text-warning' : 'text-destructive'}`}>
+              <span className={`ml-1 ${metrics.sharpeRatio >= uiT.sharpeSuccess ? 'text-success' : metrics.sharpeRatio >= uiT.sharpeWarning ? 'text-warning' : 'text-destructive'}`}>
                 {metrics.sharpeRatio.toFixed(2)}
               </span>
             </div>
@@ -305,31 +327,90 @@ export function CorrelationPanel() {
       </motion.div>
 
       {/* Equity Chart */}
-      {chartData.length > 0 && (
+      {chartData.length > 0 && equityData.is && equityData.oos && (
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="chart-container">
           <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
-            Equity Combinada IS → OOS
+            Equity Combinada {period === 'all' ? 'IS → OOS' : period.toUpperCase()}
           </h3>
           <p className="text-[10px] text-muted-foreground mb-2">
-            Verde = IS (entrenamiento) • Azul = OOS (validación) • La línea discontinua indica el cambio de período
+            {period === 'all' 
+              ? 'Azul = IS (entrenamiento) • Amarillo = OOS (validación)'
+              : period === 'is' 
+                ? 'Período de entrenamiento (In-Sample)'
+                : 'Período de validación (Out-of-Sample)'}
           </p>
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.grid} />
-              <XAxis dataKey="date" stroke={CHART_COLORS.textDim} tick={{ fontSize: 8 }} interval={20} />
-              <YAxis stroke={CHART_COLORS.textDim} tick={{ fontSize: 10 }} tickFormatter={v => formatNumber(v)} domain={domain} />
-              <Tooltip {...CHART_TOOLTIP_STYLE} formatter={(v: number, name: string) => [`$${formatNumber(v)}`, name]} />
-              <Legend />
-              <Line 
-                type="monotone" 
-                dataKey="equity" 
-                stroke={CHART_COLORS.primary} 
-                strokeWidth={2} 
-                dot={false}
-                connectNulls={false}
-              />
-            </LineChart>
-          </ResponsiveContainer>
+          
+          {period === 'all' ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart>
+                <CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.grid} />
+                <XAxis 
+                  data={equityData.is}
+                  dataKey="date"
+                  stroke={CHART_COLORS.textDim} 
+                  tick={{ fontSize: 7 }} 
+                  interval={15}
+                />
+                <YAxis 
+                  stroke={CHART_COLORS.textDim} 
+                  tick={{ fontSize: 9 }} 
+                  tickFormatter={v => `$${(v/1000).toFixed(0)}K`}
+                  domain={domain}
+                />
+                <Tooltip {...CHART_TOOLTIP_STYLE} formatter={(v: number, name: string) => [`$${formatNumber(v)}`, name]} />
+                <Legend />
+                <Line 
+                  type="monotone" 
+                  data={equityData.is}
+                  dataKey="equity" 
+                  stroke={CHART_COLORS.info} 
+                  strokeWidth={2} 
+                  dot={false}
+                  name="IS"
+                  connectNulls={false}
+                />
+                <Line 
+                  type="monotone" 
+                  data={equityData.oos}
+                  dataKey="equity" 
+                  stroke={CHART_COLORS.warning} 
+                  strokeWidth={3} 
+                  dot={false}
+                  name="OOS"
+                  connectNulls={false}
+                />
+                {equityData.is && equityData.is.length > 0 && equityData.oos && equityData.oos.length > 0 && (
+                  <ReferenceLine 
+                    x={equityData.is[equityData.is.length - 1]?.date} 
+                    stroke={CHART_COLORS.danger} 
+                    strokeDasharray="5 5"
+                    strokeWidth={1}
+                  />
+                )}
+              </LineChart>
+            </ResponsiveContainer>
+          ) : (
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={period === 'is' ? (equityData.is || []) : (equityData.oos || [])}>
+                <CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.grid} />
+                <XAxis dataKey="date" stroke={CHART_COLORS.textDim} tick={{ fontSize: 8 }} interval={20} />
+                <YAxis 
+                  stroke={CHART_COLORS.textDim} 
+                  tick={{ fontSize: 9 }} 
+                  tickFormatter={v => `$${(v/1000).toFixed(0)}K`}
+                  domain={domain}
+                />
+                <Tooltip {...CHART_TOOLTIP_STYLE} formatter={(v: number) => [`$${formatNumber(v)}`, 'Equity']} />
+                <Line 
+                  type="monotone" 
+                  dataKey="equity" 
+                  stroke={period === 'is' ? CHART_COLORS.info : CHART_COLORS.warning}
+                  strokeWidth={2} 
+                  dot={false}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          )}
         </motion.div>
       )}
     </div>
